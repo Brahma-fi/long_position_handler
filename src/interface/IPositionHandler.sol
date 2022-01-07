@@ -10,6 +10,16 @@ interface IPositionHandler {
 
     function withdraw(address _token, uint256 _amount) external;
 
-    function amountInPosition() external view returns (uint256);
+    function amountInPosition(address _token) external view returns (uint256);
 
 }
+
+
+// Long position handler accepts and gives back only want token i.e., USDC.
+// Once recieved USDC --> router --> which accepts destination token --> CRV/CVXCRV depending upon the price.
+// CRV/CVXCRV --> staked on convex.
+// rewards --> 3 tokens CVX, 3crvlp token, crv token.
+// CVXCRV <--> USDC integration with 1inch as seperate module.
+// CVXCRV --> CRV in curve pool. CRV --> USDC in curve pool.
+
+
