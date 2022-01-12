@@ -1,16 +1,17 @@
 /// SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.0;
 
+import "./interface/ISwapRouter.sol";
 import "./interface/IOneSplit.sol";
 import "./interface/IAggregationRouter.sol";
 import "./interface/IChainlinkAggregatorV3.sol";
+
 import "./utils/Console.sol";
 
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
-contract SwapRouter {
+contract SwapRouter is ISwapRouter {
     using SafeERC20 for IERC20Metadata;
 
     IERC20Metadata public immutable USDC =
