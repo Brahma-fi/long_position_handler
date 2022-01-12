@@ -2,11 +2,14 @@
 pragma solidity ^0.8.0;
 
 import "./interface/IOneSplit.sol";
+import "./utils/Console.sol";
 
+import "../lib/ds-test/src/test.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
-contract SwapRouter {
+contract SwapRouter is DSTest {
     using SafeERC20 for IERC20;
 
     // 0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E
@@ -26,7 +29,7 @@ contract SwapRouter {
         address token,
         uint256 amountToSwap,
         address recipient
-    ) public returns (uint256 amountOut) {
+    ) external returns (uint256 amountOut) {
         require(token != address(0x0), "Invalid token");
         require(amountToSwap > 0, "Invalid swap amount");
 
@@ -40,6 +43,9 @@ contract SwapRouter {
             uint256[] memory distribution
         ) = _estimateSwapResults(token0, token1, amountToSwap);
 
+        require(false, Strings.toString(expectedAmountOut));
+        emit log_named_uint("Estimate", expectedAmountOut);
+
         amountOut = _swapTokens(
             token0,
             token1,
@@ -48,7 +54,11 @@ contract SwapRouter {
             distribution
         );
 
-        token1.safeTransferFrom(address(this), recipient, amountOut);
+        token1.safeTransferFrom(
+            address(this),
+            recipient,
+            token1.balanceOf(address(this))
+        );
         token0.safeTransferFrom(
             address(this),
             recipient,
@@ -70,7 +80,7 @@ contract SwapRouter {
             token1,
             amount,
             3,
-            0
+            OneSplitConsts.FLAG_DISABLE_UNISWAP_V2
         );
     }
 
@@ -83,13 +93,13 @@ contract SwapRouter {
     ) internal returns (uint256 _swappedAmount) {
         token0.approve(address(oneSplitSwap), amount);
 
-        _swappedAmount = oneSplitSwap.swap(
+        oneSplitSwap.swap(
             token0,
             token1,
             amount,
-            minReturn,
+            (minReturn * 95) / 100,
             distribution,
-            0
+            OneSplitConsts.FLAG_DISABLE_UNISWAP_V2
         );
     }
 }
