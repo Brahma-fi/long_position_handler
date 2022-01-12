@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 interface IPositionHandler {
     function openPosition(
-        address _token,
         uint256 _amount,
-        bool _isLong
+        bool _isLong,
+        bytes memory _data
     ) external;
 
-    function closePosition(address _token, uint256 _amount) external;
+    function closePosition(uint256 _amount, bytes memory _data) external;
 
     function deposit(uint256 _amount) external;
 
