@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IOneSplit.sol";
+import "./ICurvePool.sol";
 import "./IAggregationRouter.sol";
 import "./IChainlinkAggregatorV3.sol";
 
@@ -11,9 +12,16 @@ interface ISwapRouter {
     /// CONSTANTS
     function USDC() external returns (IERC20Metadata);
 
+    function governance() external returns (address);
+
+    /// CURVE POOL (CRV/CVXCRV)
     function CRV() external returns (IERC20Metadata);
 
     function CVX() external returns (IERC20Metadata);
+
+    function CVXCRV() external returns (IERC20Metadata);
+
+    function crvcvxcrvPool() external returns (ICurvePool);
 
     /// 1INCH AGGREGATORS
     function oneInchRouter() external returns (IAggregationRouter);
@@ -34,6 +42,10 @@ interface ISwapRouter {
         uint256 slippage,
         bytes memory data
     ) external returns (uint256 amountOut);
+
+    function swapCRVToCVXCRV(uint256 amount, address recepient)
+        external
+        returns (uint256 amountOut);
 
     function sweep() external;
 }
