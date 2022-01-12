@@ -10,11 +10,13 @@ interface IPositionHandler {
 
     function closePosition(address _token, uint256 _amount) external;
 
-    function deposit(address _token, uint256 _amount) external;
+    function deposit(uint256 _amount) external;
 
-    function withdraw(address _token, uint256 _amount) external;
+    function withdraw(uint256 _amount) external;
 
     function amountInPosition(address _token) external view returns (uint256);
+
+    function sweep() external;
 }
 
 // Long position handler accepts and gives back only want token i.e., USDC.

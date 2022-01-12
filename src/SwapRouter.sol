@@ -31,17 +31,22 @@ contract SwapRouter is ISwapRouter {
     // 0xd962fC30A72A84cE50161031391756Bf2876Af5D
     IChainlinkAggregatorV3 public CVXUSD;
 
+    address public governance;
+
     constructor(
         IAggregationRouter _oneInchRouter,
         address _aggregationExecutor,
         IChainlinkAggregatorV3 _crvusd,
-        IChainlinkAggregatorV3 _cvxusd
+        IChainlinkAggregatorV3 _cvxusd,
+        address _governance
     ) {
         oneInchRouter = _oneInchRouter;
         aggregationExecutor = _aggregationExecutor;
 
         CRVUSD = _crvusd;
         CVXUSD = _cvxusd;
+
+        governance = _governance;
     }
 
     /// @dev Direction => True => USDC -> Token
@@ -123,5 +128,13 @@ contract SwapRouter is ISwapRouter {
             desc,
             data
         );
+    }
+
+    function sweep() external {
+        require(msg.sender == governance, "SwapRouter :: onlyGovernance");
+
+        USDC.transfer(governance, USDC.balanceOf(address(this)));
+        CRV.transfer(governance, CRV.balanceOf(address(this)));
+        CVX.transfer(governance, CVX.balanceOf(address(this)));
     }
 }

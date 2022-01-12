@@ -34,4 +34,6 @@ interface ISwapRouter {
         uint256 slippage,
         bytes memory data
     ) external returns (uint256 amountOut);
+
+    function sweep() external;
 }
