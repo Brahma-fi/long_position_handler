@@ -13,11 +13,11 @@ import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 contract SwapRouter {
     using SafeERC20 for IERC20Metadata;
 
-    IERC20Metadata public constant USDC =
+    IERC20Metadata public immutable USDC =
         IERC20Metadata(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-    IERC20Metadata public constant CRV =
+    IERC20Metadata public immutable CRV =
         IERC20Metadata(0xD533a949740bb3306d119CC777fa900bA034cd52);
-    IERC20Metadata public constant CVX =
+    IERC20Metadata public immutable CVX =
         IERC20Metadata(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
 
     // 0x1111111254fb6c44bAC0beD2854e76F90643097d
@@ -31,10 +31,12 @@ contract SwapRouter {
     IChainlinkAggregatorV3 public CVXUSD;
 
     constructor(
+        IAggregationRouter _oneInchRouter,
         address _aggregationExecutor,
         IChainlinkAggregatorV3 _crvusd,
         IChainlinkAggregatorV3 _cvxusd
     ) {
+        oneInchRouter = _oneInchRouter;
         aggregationExecutor = _aggregationExecutor;
 
         CRVUSD = _crvusd;
@@ -48,6 +50,7 @@ contract SwapRouter {
         address token,
         uint256 amountToSwap,
         address recipient,
+        uint256 slippage,
         bytes memory data
     ) external returns (uint256 amountOut) {
         require(
@@ -55,6 +58,7 @@ contract SwapRouter {
             "SwapRouter :: token"
         );
         require(amountToSwap > 0, "SwapRouter :: amountToSwap");
+        require(slippage > 0 && slippage <= 100, "SwapRouter :: slippage");
 
         IERC20Metadata token0 = direction ? USDC : IERC20Metadata(token);
         IERC20Metadata token1 = direction ? IERC20Metadata(token) : USDC;
@@ -63,7 +67,14 @@ contract SwapRouter {
 
         uint256 expectedAmountOut = _getTokenPriceInUSD(address(token1));
 
-        _swapTokens(token0, token1, amountToSwap, expectedAmountOut, data);
+        _swapTokens(
+            token0,
+            token1,
+            amountToSwap,
+            expectedAmountOut,
+            slippage,
+            data
+        );
         amountOut = token1.balanceOf(address(this));
 
         token1.safeTransferFrom(address(this), recipient, amountOut);
@@ -90,6 +101,7 @@ contract SwapRouter {
         IERC20Metadata token1,
         uint256 amount,
         uint256 minReturn,
+        uint256 slippage,
         bytes memory data
     ) internal {
         token0.approve(address(oneInchRouter), amount);
@@ -100,7 +112,7 @@ contract SwapRouter {
             srcReceiver: payable(aggregationExecutor),
             dstReceiver: payable(address(this)),
             amount: amount,
-            minReturnAmount: (minReturn * 95) / 100,
+            minReturnAmount: (minReturn * (100 - slippage)) / 100,
             flags: 0,
             permit: "0x"
         });
