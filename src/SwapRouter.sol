@@ -2,24 +2,43 @@
 pragma solidity ^0.8.0;
 
 import "./interface/IOneSplit.sol";
+import "./interface/IAggregationRouter.sol";
+import "./interface/IChainlinkAggregatorV3.sol";
 import "./utils/Console.sol";
 
-import "../lib/ds-test/src/test.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 
-contract SwapRouter is DSTest {
-    using SafeERC20 for IERC20;
+contract SwapRouter {
+    using SafeERC20 for IERC20Metadata;
 
-    // 0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E
-    IOneSplit public oneSplitSwap;
-    // 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
-    IERC20 public USDC;
+    IERC20Metadata public constant USDC =
+        IERC20Metadata(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    IERC20Metadata public constant CRV =
+        IERC20Metadata(0xD533a949740bb3306d119CC777fa900bA034cd52);
+    IERC20Metadata public constant CVX =
+        IERC20Metadata(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
 
-    constructor(IOneSplit _oneSplitSwap, IERC20 _USDC) {
-        oneSplitSwap = _oneSplitSwap;
-        USDC = _USDC;
+    // 0x1111111254fb6c44bAC0beD2854e76F90643097d
+    IAggregationRouter public oneInchRouter;
+    // 0x220bdA5c8994804Ac96ebe4DF184d25e5c2196D4
+    address public aggregationExecutor;
+
+    // 0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f
+    IChainlinkAggregatorV3 public CRVUSD;
+    // 0xd962fC30A72A84cE50161031391756Bf2876Af5D
+    IChainlinkAggregatorV3 public CVXUSD;
+
+    constructor(
+        address _aggregationExecutor,
+        IChainlinkAggregatorV3 _crvusd,
+        IChainlinkAggregatorV3 _cvxusd
+    ) {
+        aggregationExecutor = _aggregationExecutor;
+
+        CRVUSD = _crvusd;
+        CVXUSD = _cvxusd;
     }
 
     /// @dev Direction => True => USDC -> Token
@@ -28,37 +47,26 @@ contract SwapRouter is DSTest {
         bool direction,
         address token,
         uint256 amountToSwap,
-        address recipient
+        address recipient,
+        bytes memory data
     ) external returns (uint256 amountOut) {
-        require(token != address(0x0), "Invalid token");
-        require(amountToSwap > 0, "Invalid swap amount");
+        require(
+            token != address(CRV) && token != address(CVX),
+            "SwapRouter :: token"
+        );
+        require(amountToSwap > 0, "SwapRouter :: amountToSwap");
 
-        IERC20 token0 = direction ? USDC : IERC20(token);
-        IERC20 token1 = direction ? IERC20(token) : USDC;
+        IERC20Metadata token0 = direction ? USDC : IERC20Metadata(token);
+        IERC20Metadata token1 = direction ? IERC20Metadata(token) : USDC;
 
         token0.safeTransferFrom(recipient, address(this), amountToSwap);
 
-        (
-            uint256 expectedAmountOut,
-            uint256[] memory distribution
-        ) = _estimateSwapResults(token0, token1, amountToSwap);
+        uint256 expectedAmountOut = _getTokenPriceInUSD(address(token1));
 
-        require(false, Strings.toString(expectedAmountOut));
-        emit log_named_uint("Estimate", expectedAmountOut);
+        _swapTokens(token0, token1, amountToSwap, expectedAmountOut, data);
+        amountOut = token1.balanceOf(address(this));
 
-        amountOut = _swapTokens(
-            token0,
-            token1,
-            amountToSwap,
-            expectedAmountOut,
-            distribution
-        );
-
-        token1.safeTransferFrom(
-            address(this),
-            recipient,
-            token1.balanceOf(address(this))
-        );
+        token1.safeTransferFrom(address(this), recipient, amountOut);
         token0.safeTransferFrom(
             address(this),
             recipient,
@@ -66,40 +74,41 @@ contract SwapRouter is DSTest {
         );
     }
 
-    function _estimateSwapResults(
-        IERC20 token0,
-        IERC20 token1,
-        uint256 amount
-    )
+    function _getTokenPriceInUSD(address token)
         internal
         view
-        returns (uint256 expectedAmountOut, uint256[] memory distribution)
+        returns (uint256)
     {
-        (expectedAmountOut, distribution) = oneSplitSwap.getExpectedReturn(
-            token0,
-            token1,
-            amount,
-            3,
-            OneSplitConsts.FLAG_DISABLE_UNISWAP_V2
-        );
+        (, int256 answer, , , ) = (token == address(CRV) ? CRVUSD : CVXUSD)
+            .latestRoundData();
+
+        return (uint256(answer) / uint256(CRVUSD.decimals())) * USDC.decimals();
     }
 
     function _swapTokens(
-        IERC20 token0,
-        IERC20 token1,
+        IERC20Metadata token0,
+        IERC20Metadata token1,
         uint256 amount,
         uint256 minReturn,
-        uint256[] memory distribution
-    ) internal returns (uint256 _swappedAmount) {
-        token0.approve(address(oneSplitSwap), amount);
+        bytes memory data
+    ) internal {
+        token0.approve(address(oneInchRouter), amount);
 
-        oneSplitSwap.swap(
-            token0,
-            token1,
-            amount,
-            (minReturn * 95) / 100,
-            distribution,
-            OneSplitConsts.FLAG_DISABLE_UNISWAP_V2
+        SwapDescription memory desc = SwapDescription({
+            srcToken: IERC20(address(token0)),
+            dstToken: IERC20(address(token1)),
+            srcReceiver: payable(aggregationExecutor),
+            dstReceiver: payable(address(this)),
+            amount: amount,
+            minReturnAmount: (minReturn * 95) / 100,
+            flags: 0,
+            permit: "0x"
+        });
+
+        oneInchRouter.swap(
+            IAggregationExecutor(aggregationExecutor),
+            desc,
+            data
         );
     }
 }
