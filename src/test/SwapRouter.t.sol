@@ -5,8 +5,8 @@ import "../SwapRouter.sol";
 import "../interface/IOneSplit.sol";
 import "./utils/IWETH9.sol";
 
-import "../../lib/ds-test/src/test.sol";
-import "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@ds-test/test.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract SwapRouterTest is DSTest {
     SwapRouter private swapRouter;
