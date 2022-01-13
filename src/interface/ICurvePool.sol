@@ -15,4 +15,10 @@ interface ICurvePool {
         int128 i,
         uint256 min_amount
     ) external;
+
+    function get_dy(
+        int128 i,
+        int128 j,
+        uint256 _dx
+    ) external returns (uint256);
 }

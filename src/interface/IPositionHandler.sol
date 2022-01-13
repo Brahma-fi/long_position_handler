@@ -19,7 +19,7 @@ interface IPositionHandler {
 
     function deposit(uint256 _amount) external;
 
-    function withdraw(uint256 _amount) external;
+    function withdraw(uint256 _amount) external returns (uint256);
 
     function allBalances()
         external

@@ -57,5 +57,8 @@ interface ISwapRouter {
         external
         returns (uint256 amountOut);
 
+    // Only CRV & CVX
+    function getTokenPriceInUSD(address token) external view returns (uint256);
+
     function sweep() external;
 }

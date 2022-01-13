@@ -86,7 +86,7 @@ contract SwapRouter is ISwapRouter {
 
         token0.safeTransferFrom(recipient, address(this), amountToSwap);
 
-        uint256 expectedAmountOut = _getTokenPriceInUSD(address(token1));
+        uint256 expectedAmountOut = getTokenPriceInUSD(address(token1));
 
         _swapTokens(
             token0,
@@ -156,11 +156,12 @@ contract SwapRouter is ISwapRouter {
         USDC.safeTransfer(recipient, amountOut);
     }
 
-    function _getTokenPriceInUSD(address token)
-        internal
-        view
-        returns (uint256)
-    {
+    function getTokenPriceInUSD(address token) public view returns (uint256) {
+        require(
+            token == address(CRV) || token == address(CVX),
+            "SwapRouter :: token"
+        );
+
         (, int256 answer, , , ) = (token == address(CRV) ? CRVUSD : CVXUSD)
             .latestRoundData();
 
