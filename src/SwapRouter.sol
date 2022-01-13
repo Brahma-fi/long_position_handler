@@ -1,4 +1,4 @@
-/// SPDX-License-Identifier: Unlicensed
+/// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
 import "./interface/ISwapRouter.sol";
@@ -9,8 +9,7 @@ import "./interface/ICurvePool.sol";
 
 import "./utils/Console.sol";
 
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract SwapRouter is ISwapRouter {
     using SafeERC20 for IERC20Metadata;
