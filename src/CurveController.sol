@@ -5,6 +5,8 @@ import "./interface/ISwapRouter.sol";
 import "./interface/IConvexRewards.sol";
 import "./interface/IPositionHandler.sol";
 
+import "./library/Math.sol";
+
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -78,42 +80,97 @@ contract CurveController is IPositionHandler {
         uint256 _slippage
     ) external {
         /// Convert CRV -> USDC on 1inch
-        _safeApproveIfNotApproved(swapRouter.CRV(), address(swapRouter));
-        swapRouter.estimateAndSwapTokens(
-            false,
-            address(swapRouter.CRV()),
-            swapRouter.CRV().balanceOf(address(this)),
-            address(this),
-            _slippage,
-            _crvSwapData
-        );
+        if (swapRouter.CRV().balanceOf(address(this)) > 0) {
+            _safeApproveIfNotApproved(swapRouter.CRV(), address(swapRouter));
+            swapRouter.estimateAndSwapTokens(
+                false,
+                address(swapRouter.CRV()),
+                swapRouter.CRV().balanceOf(address(this)),
+                address(this),
+                _slippage,
+                _crvSwapData
+            );
+        }
 
         /// Convert CVX to USDC on 1inch
-        _safeApproveIfNotApproved(swapRouter.CVX(), address(swapRouter));
-        swapRouter.estimateAndSwapTokens(
-            false,
-            address(swapRouter.CVX()),
-            swapRouter.CVX().balanceOf(address(this)),
-            address(this),
-            _slippage,
-            _cvxSwapData
-        );
+        if (swapRouter.CVX().balanceOf(address(this)) > 0) {
+            _safeApproveIfNotApproved(swapRouter.CVX(), address(swapRouter));
+            swapRouter.estimateAndSwapTokens(
+                false,
+                address(swapRouter.CVX()),
+                swapRouter.CVX().balanceOf(address(this)),
+                address(this),
+                _slippage,
+                _cvxSwapData
+            );
+        }
 
         /// Burn 3CRV to get USDC on Curve
-        _safeApproveIfNotApproved(swapRouter._3CRV(), address(swapRouter));
-        swapRouter.burn3CRVForUSDC(
-            swapRouter._3CRV().balanceOf(address(this)),
-            address(this)
-        );
+        if (swapRouter._3CRV().balanceOf(address(this)) > 0) {
+            _safeApproveIfNotApproved(swapRouter._3CRV(), address(swapRouter));
+            swapRouter.burn3CRVForUSDC(
+                swapRouter._3CRV().balanceOf(address(this)),
+                address(this)
+            );
+        }
     }
 
     function deposit(uint256 _amount) external validTransaction(_amount) {
         swapRouter.USDC().safeTransferFrom(msg.sender, address(this), _amount);
     }
 
-    function withdraw(uint256 _amount) external validTransaction(_amount) {
-        // insufficient USDC --> transfer USDC bal --> cvxCRV -> CRV -> USDC --> transfer USDC bal
-        swapRouter.USDC().safeTransferFrom(address(this), msg.sender, _amount);
+    function withdraw(uint256 _amount)
+        external
+        validTransaction(_amount)
+        returns (
+            uint256 amountWithdrawn,
+            uint256 pendingWithdrawal,
+            uint256 amountUnableToWithdraw
+        )
+    {
+        uint256 usdcBalance = swapRouter.USDC().balanceOf(address(this));
+
+        /// Transfer USDC if sufficient balance
+        if (_amount <= usdcBalance) {
+            swapRouter.USDC().safeTransfer(msg.sender, _amount);
+            amountWithdrawn = _amount;
+            pendingWithdrawal = 0;
+            amountUnableToWithdraw = 0;
+        } else {
+            /// If insufficient, transfer all USDC Balance
+            amountWithdrawn = usdcBalance;
+            swapRouter.USDC().safeTransfer(msg.sender, usdcBalance);
+            uint256 pendingAmount = _amount - usdcBalance;
+
+            /// Find amount of cvxCRV to unstake to get pending withdrawals
+            uint256 crvPrice = swapRouter.getTokenPriceInUSD(
+                address(swapRouter.CRV())
+            );
+            uint256 cvxcrvBalanceInCRV = swapRouter.crvcvxcrvPool().get_dy(
+                1,
+                0,
+                baseRewardPool.balanceOf(address(this))
+            );
+            uint256 cvxcrvBalanceInUSDC = (crvPrice * cvxcrvBalanceInCRV);
+            uint256 cvxcrvInUSDCToUnstake = Math.min(
+                pendingAmount,
+                cvxcrvBalanceInUSDC
+            );
+
+            /// return pendingWithdrawals & set any amountUnableToWithdraw
+            pendingWithdrawal = cvxcrvInUSDCToUnstake / crvPrice;
+            amountUnableToWithdraw = Math.min(
+                0,
+                pendingAmount - cvxcrvInUSDCToUnstake
+            );
+
+            /// swap cvxCRV for CRV
+            swapRouter.swapOnCRVCVXCRVPool(
+                false,
+                pendingWithdrawal,
+                address(this)
+            );
+        }
     }
 
     function allBalances()
