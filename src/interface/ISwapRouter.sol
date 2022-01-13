@@ -43,9 +43,11 @@ interface ISwapRouter {
         bytes memory data
     ) external returns (uint256 amountOut);
 
-    function swapCRVToCVXCRV(uint256 amount, address recepient)
-        external
-        returns (uint256 amountOut);
+    function swapOnCRVCVXCRVPool(
+        bool direction,
+        uint256 amount,
+        address recepient
+    ) external returns (uint256 amountOut);
 
     function sweep() external;
 }

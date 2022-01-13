@@ -96,24 +96,35 @@ contract SwapRouter is ISwapRouter {
         token0.safeTransfer(recipient, token0.balanceOf(address(this)));
     }
 
-    function swapCRVToCVXCRV(uint256 amount, address recepient)
-        external
-        override
-        returns (uint256 amountOut)
-    {
+    /// @dev Direction => True => CRV -> CVXCRV
+    /// @dev Direction => False =>  CVXCRV -> CRV
+    function swapOnCRVCVXCRVPool(
+        bool direction,
+        uint256 amount,
+        address recepient
+    ) external override returns (uint256 amountOut) {
+        IERC20Metadata swapToken = direction ? CRV : CVXCRV;
+        IERC20Metadata recievedToken = direction ? CVXCRV : CRV;
+
         require(
-            amount > 0 && amount <= CRV.balanceOf(msg.sender),
+            amount > 0 && amount <= swapToken.balanceOf(msg.sender),
             "SwapRouter :: amount"
         );
         require(recepient != address(0), "SwapRouter :: recepient");
 
-        CRV.safeTransferFrom(msg.sender, address(this), amount);
-        crvcvxcrvPool.exchange(0, 1, amount, 0, address(this));
+        swapToken.safeTransferFrom(msg.sender, address(this), amount);
+        crvcvxcrvPool.exchange(
+            int8(direction ? 0 : 1),
+            int8(direction ? 1 : 0),
+            amount,
+            0,
+            address(this)
+        );
 
-        amountOut = CVXCRV.balanceOf(address(this));
+        amountOut = recievedToken.balanceOf(address(this));
 
-        CRV.safeTransfer(recepient, CRV.balanceOf(address(this)));
-        CVXCRV.safeTransfer(recepient, amountOut);
+        swapToken.safeTransfer(recepient, swapToken.balanceOf(address(this)));
+        recievedToken.safeTransfer(recepient, amountOut);
     }
 
     function _getTokenPriceInUSD(address token)
