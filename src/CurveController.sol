@@ -24,6 +24,7 @@ contract CurveController is IPositionHandler {
     function openPosition(
         uint256 _amount,
         bool _isLong,
+        uint256 _slippage,
         bytes memory _data
     ) external {
         require(_isLong, "CurveController :: not long");
@@ -40,7 +41,7 @@ contract CurveController is IPositionHandler {
             address(swapRouter.CRV()),
             _amount,
             address(this),
-            5,
+            _slippage,
             _data
         );
 
@@ -61,12 +62,7 @@ contract CurveController is IPositionHandler {
 
         /// Unstake and claim all rewards from convex
         baseRewardPool.withdrawAll(true);
-    }
 
-    function swapAllTokensToUSDC(
-        bytes memory _crvSwapData,
-        bytes memory _cvxSwapData
-    ) external {
         /// Convert cvxCRV -> CRV on curve
         _safeApproveIfNotApproved(swapRouter.CVXCRV(), address(swapRouter));
         swapRouter.swapOnCRVCVXCRVPool(
@@ -74,7 +70,13 @@ contract CurveController is IPositionHandler {
             swapRouter.CVXCRV().balanceOf(address(this)),
             address(this)
         );
+    }
 
+    function swapAllTokensToUSDC(
+        bytes memory _crvSwapData,
+        bytes memory _cvxSwapData,
+        uint256 _slippage
+    ) external {
         /// Convert CRV -> USDC on 1inch
         _safeApproveIfNotApproved(swapRouter.CRV(), address(swapRouter));
         swapRouter.estimateAndSwapTokens(
@@ -82,7 +84,7 @@ contract CurveController is IPositionHandler {
             address(swapRouter.CRV()),
             swapRouter.CRV().balanceOf(address(this)),
             address(this),
-            5,
+            _slippage,
             _crvSwapData
         );
 
@@ -93,7 +95,7 @@ contract CurveController is IPositionHandler {
             address(swapRouter.CVX()),
             swapRouter.CVX().balanceOf(address(this)),
             address(this),
-            5,
+            _slippage,
             _cvxSwapData
         );
 

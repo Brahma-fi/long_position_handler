@@ -5,6 +5,7 @@ interface IPositionHandler {
     function openPosition(
         uint256 _amount,
         bool _isLong,
+        uint256 _slippage,
         bytes memory _data
     ) external;
 
@@ -12,7 +13,8 @@ interface IPositionHandler {
 
     function swapAllTokensToUSDC(
         bytes memory _crvSwapData,
-        bytes memory _cvxSwapData
+        bytes memory _cvxSwapData,
+        uint256 _slippage
     ) external;
 
     function deposit(uint256 _amount) external;
