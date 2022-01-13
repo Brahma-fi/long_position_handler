@@ -8,11 +8,26 @@ interface IPositionHandler {
         bytes memory _data
     ) external;
 
-    function closePosition(uint256 _amount, bytes memory _data) external;
+    function closePosition(uint256 _amount) external;
+
+    function swapAllTokensToUSDC(
+        bytes memory _crvSwapData,
+        bytes memory _cvxSwapData
+    ) external;
 
     function deposit(uint256 _amount) external;
 
     function withdraw(uint256 _amount) external;
+
+    function allBalances()
+        external
+        returns (
+            uint256 crvBalance,
+            uint256 cvxcrvBalance,
+            uint256 cvxBalance,
+            uint256 _3crvBalance,
+            uint256 usdcBalance
+        );
 
     function amountInPosition(address _token) external view returns (uint256);
 
