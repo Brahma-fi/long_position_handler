@@ -23,6 +23,8 @@ contract SwapRouter is ISwapRouter {
         IERC20Metadata(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
     IERC20Metadata public immutable override CVXCRV =
         IERC20Metadata(0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7);
+    IERC20Metadata public immutable _3CRV =
+        IERC20Metadata(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
 
     // 0x1111111254fb6c44bAC0beD2854e76F90643097d
     IAggregationRouter public override oneInchRouter;
@@ -36,6 +38,8 @@ contract SwapRouter is ISwapRouter {
 
     // 0x9D0464996170c6B9e75eED71c68B99dDEDf279e8
     ICurvePool public override crvcvxcrvPool;
+    // 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7
+    ICurvePool public override _3crvPool;
 
     address public override governance;
 
@@ -45,6 +49,7 @@ contract SwapRouter is ISwapRouter {
         IChainlinkAggregatorV3 _crvusd,
         IChainlinkAggregatorV3 _cvxusd,
         ICurvePool _crvcvxcrvPool,
+        ICurvePool __3crvPool,
         address _governance
     ) {
         oneInchRouter = _oneInchRouter;
@@ -54,6 +59,7 @@ contract SwapRouter is ISwapRouter {
         CVXUSD = _cvxusd;
 
         crvcvxcrvPool = _crvcvxcrvPool;
+        _3crvPool = __3crvPool;
 
         governance = _governance;
     }
@@ -101,7 +107,7 @@ contract SwapRouter is ISwapRouter {
     function swapOnCRVCVXCRVPool(
         bool direction,
         uint256 amount,
-        address recepient
+        address recipient
     ) external override returns (uint256 amountOut) {
         IERC20Metadata swapToken = direction ? CRV : CVXCRV;
         IERC20Metadata recievedToken = direction ? CVXCRV : CRV;
@@ -110,9 +116,10 @@ contract SwapRouter is ISwapRouter {
             amount > 0 && amount <= swapToken.balanceOf(msg.sender),
             "SwapRouter :: amount"
         );
-        require(recepient != address(0), "SwapRouter :: recepient");
+        require(recipient != address(0), "SwapRouter :: recipient");
 
         swapToken.safeTransferFrom(msg.sender, address(this), amount);
+        swapToken.safeApprove(address(crvcvxcrvPool), amount);
         crvcvxcrvPool.exchange(
             int8(direction ? 0 : 1),
             int8(direction ? 1 : 0),
@@ -123,8 +130,30 @@ contract SwapRouter is ISwapRouter {
 
         amountOut = recievedToken.balanceOf(address(this));
 
-        swapToken.safeTransfer(recepient, swapToken.balanceOf(address(this)));
-        recievedToken.safeTransfer(recepient, amountOut);
+        swapToken.safeTransfer(recipient, swapToken.balanceOf(address(this)));
+        recievedToken.safeTransfer(recipient, amountOut);
+    }
+
+    function burn3CRVForUSDC(uint256 amount, address recipient)
+        external
+        override
+        returns (uint256 amountOut)
+    {
+        require(
+            amount > 0 && amount <= _3CRV.balanceOf(msg.sender),
+            "SwapRouter :: amount"
+        );
+        require(recipient != address(0), "SwapRouter :: recipient");
+
+        _3CRV.safeTransferFrom(msg.sender, address(this), amount);
+        _3CRV.safeApprove(address(_3crvPool), amount);
+        /// @dev i = 1 --> USDC
+        _3crvPool.remove_liquidity_one_coin(amount, 1, 0);
+
+        amountOut = USDC.balanceOf(address(this));
+
+        _3CRV.safeTransfer(recipient, amount);
+        USDC.safeTransfer(recipient, amountOut);
     }
 
     function _getTokenPriceInUSD(address token)
@@ -146,7 +175,7 @@ contract SwapRouter is ISwapRouter {
         uint256 slippage,
         bytes memory data
     ) internal {
-        token0.approve(address(oneInchRouter), amount);
+        token0.safeApprove(address(oneInchRouter), amount);
 
         SwapDescription memory desc = SwapDescription({
             srcToken: IERC20(address(token0)),

@@ -9,4 +9,10 @@ interface ICurvePool {
         uint256 _min_dy,
         address _receiver
     ) external returns (uint256);
+
+    function remove_liquidity_one_coin(
+        uint256 _token_amount,
+        int128 i,
+        uint256 min_amount
+    ) external;
 }

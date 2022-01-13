@@ -23,6 +23,8 @@ interface ISwapRouter {
 
     function crvcvxcrvPool() external returns (ICurvePool);
 
+    function _3crvPool() external returns (ICurvePool);
+
     /// 1INCH AGGREGATORS
     function oneInchRouter() external returns (IAggregationRouter);
 
@@ -48,6 +50,10 @@ interface ISwapRouter {
         uint256 amount,
         address recepient
     ) external returns (uint256 amountOut);
+
+    function burn3CRVForUSDC(uint256 amount, address recipient)
+        external
+        returns (uint256 amountOut);
 
     function sweep() external;
 }
