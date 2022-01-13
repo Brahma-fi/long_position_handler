@@ -26,4 +26,6 @@ interface IConvexRewards {
         returns (bool);
 
     function stakeAll() external returns (bool);
+
+    function withdrawAll(bool claim) external;
 }

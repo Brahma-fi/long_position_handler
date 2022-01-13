@@ -33,11 +33,15 @@ contract CurveController is IPositionHandler {
             "CurveController :: amount"
         );
 
+        /// Convert USDC -> CRV on 1inch
         if (
             swapRouter.USDC().allowance(address(this), address(swapRouter)) <
             type(uint256).max
         ) {
-            swapRouter.USDC().approve(address(swapRouter), type(uint256).max);
+            swapRouter.USDC().safeApprove(
+                address(swapRouter),
+                type(uint256).max
+            );
         }
         uint256 receivedCRV = swapRouter.estimateAndSwapTokens(
             true,
@@ -48,21 +52,26 @@ contract CurveController is IPositionHandler {
             _data
         );
 
+        /// Convert CRV -> cvxCRV on Curve
         if (
             swapRouter.CRV().allowance(address(this), address(swapRouter)) <
             type(uint256).max
         ) {
-            swapRouter.CRV().approve(address(swapRouter), type(uint256).max);
+            swapRouter.CRV().safeApprove(
+                address(swapRouter),
+                type(uint256).max
+            );
         }
         swapRouter.swapOnCRVCVXCRVPool(true, receivedCRV, address(this));
 
+        /// Stake all cvxCRV on convex
         if (
             swapRouter.CVXCRV().allowance(
                 address(this),
                 address(baseRewardPool)
             ) < type(uint256).max
         ) {
-            swapRouter.CRV().approve(
+            swapRouter.CRV().safeApprove(
                 address(baseRewardPool),
                 type(uint256).max
             );
@@ -70,13 +79,52 @@ contract CurveController is IPositionHandler {
         require(baseRewardPool.stakeAll(), "CurveController :: staking");
     }
 
-    function closePosition(uint256 _amount, bytes memory _data) external {}
+    function closePosition(uint256 _amount, bytes memory _data) external {
+        require(_amount > 0, "CurveController :: amount");
+
+        /// Unstake and claim all rewards from convex
+        baseRewardPool.withdrawAll(true);
+
+        /// Convert cvxCRV -> CRV on curve
+        swapRouter.swapOnCRVCVXCRVPool(
+            false,
+            swapRouter.CVXCRV().balanceOf(address(this)),
+            address(this)
+        );
+
+        /// Convert CRV -> USDC on 1inch
+        swapRouter.estimateAndSwapTokens(
+            false,
+            address(swapRouter.CRV()),
+            swapRouter.CRV().balanceOf(address(this)),
+            address(this),
+            5,
+            _data
+        );
+
+        /// Convert CVX to USDC on 1inch
+        swapRouter.estimateAndSwapTokens(
+            false,
+            address(swapRouter.CVX()),
+            swapRouter.CVX().balanceOf(address(this)),
+            address(this),
+            5,
+            _data
+        );
+
+        /// Burn 3CRV to get USDC on Curve
+        swapRouter.burn3CRVForUSDC(
+            swapRouter._3CRV().balanceOf(address(this)),
+            address(this)
+        );
+    }
 
     function deposit(uint256 _amount) external validTransaction(_amount) {
         swapRouter.USDC().safeTransferFrom(msg.sender, address(this), _amount);
     }
 
     function withdraw(uint256 _amount) external validTransaction(_amount) {
+        // insufficient USDC --> transfer USDC bal --> cvxCRV -> CRV -> USDC --> transfer USDC bal
         swapRouter.USDC().safeTransferFrom(address(this), msg.sender, _amount);
     }
 

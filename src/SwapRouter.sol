@@ -23,7 +23,7 @@ contract SwapRouter is ISwapRouter {
         IERC20Metadata(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
     IERC20Metadata public immutable override CVXCRV =
         IERC20Metadata(0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7);
-    IERC20Metadata public immutable _3CRV =
+    IERC20Metadata public immutable override _3CRV =
         IERC20Metadata(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
 
     // 0x1111111254fb6c44bAC0beD2854e76F90643097d

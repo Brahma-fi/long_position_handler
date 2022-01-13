@@ -21,6 +21,8 @@ interface ISwapRouter {
 
     function CVXCRV() external returns (IERC20Metadata);
 
+    function _3CRV() external returns (IERC20Metadata);
+
     function crvcvxcrvPool() external returns (ICurvePool);
 
     function _3crvPool() external returns (ICurvePool);
