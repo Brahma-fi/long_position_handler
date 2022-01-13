@@ -18,9 +18,17 @@ contract CurveController is IPositionHandler {
     // 0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e
     IConvexRewards public baseRewardPool;
 
-    constructor(ISwapRouter _swapRouter, IConvexRewards _baseRewardPool) {
+    address public governance;
+
+    constructor(
+        ISwapRouter _swapRouter,
+        IConvexRewards _baseRewardPool,
+        address _governance
+    ) {
         swapRouter = _swapRouter;
         baseRewardPool = _baseRewardPool;
+
+        governance = _governance;
     }
 
     function openPosition(
@@ -195,7 +203,30 @@ contract CurveController is IPositionHandler {
         return IERC20(_token).balanceOf(address(this));
     }
 
-    function sweep() external {}
+    function sweep() external {
+        require(msg.sender == governance, "CurveController :: Governance");
+
+        swapRouter.CRV().transfer(
+            governance,
+            swapRouter.CRV().balanceOf(address(this))
+        );
+        swapRouter.CVXCRV().transfer(
+            governance,
+            swapRouter.CVXCRV().balanceOf(address(this))
+        );
+        swapRouter.CVX().transfer(
+            governance,
+            swapRouter.CVX().balanceOf(address(this))
+        );
+        swapRouter._3CRV().transfer(
+            governance,
+            swapRouter._3CRV().balanceOf(address(this))
+        );
+        swapRouter.USDC().transfer(
+            governance,
+            swapRouter.USDC().balanceOf(address(this))
+        );
+    }
 
     function _safeApproveIfNotApproved(IERC20Metadata token, address spender)
         internal
