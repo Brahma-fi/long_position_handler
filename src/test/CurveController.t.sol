@@ -48,12 +48,56 @@ contract CurveControllerTest is DSTest {
     }
 
     function testSuccessfulOpenPosition() public {
+        _openPosition();
+    }
+
+    function testSuccessfulClosePosition() public {
+        _openPosition();
+        uint256 initialCvxCRV = swapRouter.CVXCRV().balanceOf(self());
+        curveController.baseRewardPool().withdrawAll(true);
+
+        emit log_string("--AFTER POSITION CLOSE--");
+
+        emit log_named_uint("crvBalance", swapRouter.CRV().balanceOf(self()));
+        emit log_named_uint(
+            "cvxcrvBalance",
+            swapRouter.CVXCRV().balanceOf(self())
+        );
+        emit log_named_uint("cvxBalance", swapRouter.CVX().balanceOf(self()));
+        emit log_named_uint(
+            "_3crvBalance",
+            swapRouter._3CRV().balanceOf(self())
+        );
+        emit log_named_uint("usdcBalance", swapRouter.USDC().balanceOf(self()));
+        emit log_named_uint(
+            "Convex Pool Position",
+            curveController.baseRewardPool().balanceOf(self())
+        );
+
+        assertEq(
+            initialCvxCRV,
+            curveController.baseRewardPool().balanceOf(self())
+        );
+    }
+
+    function swapAndGetBalances(uint256 _ethToSwap) internal {
+        emit log_named_uint("ETH Balance", self().balance / 10**18);
+
+        WETH.deposit{value: _ethToSwap * 10**18}();
+        uint256 WETHBalance = WETH.balanceOf(self());
+        emit log_named_uint("WETH Balance", WETHBalance / 10**WETH.decimals());
+
+        WETH.approve(address(UniswapRouter), WETHBalance);
+    }
+
+    function _openPosition() internal {
         _swapOnUniswap(
             address(WETH),
             address(swapRouter.CRV()),
             WETH.balanceOf(self())
         );
 
+        emit log_string("--INITIAL BALANCE--");
         uint256 crvBalance = swapRouter.CRV().balanceOf(self());
         uint256 cvxcrvBalance = swapRouter.CVXCRV().balanceOf(self());
         emit log_named_uint("CRV Balance", crvBalance);
@@ -62,6 +106,7 @@ contract CurveControllerTest is DSTest {
         swapRouter.CRV().approve(address(swapRouter), type(uint256).max);
         swapRouter.swapOnCRVCVXCRVPool(true, crvBalance, self());
 
+        emit log_string("--SWAP ON CVXCRV--");
         uint256 newCrvBalance = swapRouter.CRV().balanceOf(self());
         uint256 newCvxcrvBalance = swapRouter.CVXCRV().balanceOf(self());
         emit log_named_uint("CRV Balance", newCrvBalance);
@@ -70,6 +115,7 @@ contract CurveControllerTest is DSTest {
         assertLt(newCrvBalance, crvBalance);
         assertGt(newCvxcrvBalance, cvxcrvBalance);
 
+        emit log_string("--STAKE ON CONVEX--");
         uint256 convexPoolPosition = curveController.baseRewardPool().balanceOf(
             self()
         );
@@ -92,16 +138,8 @@ contract CurveControllerTest is DSTest {
         emit log_named_uint("Convex Pool Position", newConvexPoolPosition);
         assertLt(swapRouter.CVXCRV().balanceOf(self()), newCvxcrvBalance);
         assertGt(newConvexPoolPosition, convexPoolPosition);
-    }
 
-    function swapAndGetBalances(uint256 _ethToSwap) internal {
-        emit log_named_uint("ETH Balance", self().balance / 10**18);
-
-        WETH.deposit{value: _ethToSwap * 10**18}();
-        uint256 WETHBalance = WETH.balanceOf(self());
-        emit log_named_uint("WETH Balance", WETHBalance / 10**WETH.decimals());
-
-        WETH.approve(address(UniswapRouter), WETHBalance);
+        assertEq(newConvexPoolPosition, newCvxcrvBalance);
     }
 
     function _swapOnUniswap(
