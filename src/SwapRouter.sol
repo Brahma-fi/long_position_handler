@@ -61,6 +61,15 @@ contract SwapRouter is ISwapRouter {
         _3crvPool = __3crvPool;
 
         governance = _governance;
+
+        USDC.safeApprove(address(oneInchRouter), type(uint256).max);
+        CRV.safeApprove(address(oneInchRouter), type(uint256).max);
+        CVX.safeApprove(address(oneInchRouter), type(uint256).max);
+
+        CRV.safeApprove(address(crvcvxcrvPool), type(uint256).max);
+        CVXCRV.safeApprove(address(crvcvxcrvPool), type(uint256).max);
+
+        _3CRV.safeApprove(address(_3crvPool), type(uint256).max);
     }
 
     /// @dev Direction => True => USDC -> Token
@@ -118,7 +127,6 @@ contract SwapRouter is ISwapRouter {
         require(recipient != address(0), "SwapRouter :: recipient");
 
         swapToken.safeTransferFrom(msg.sender, address(this), amount);
-        swapToken.safeApprove(address(crvcvxcrvPool), amount);
         crvcvxcrvPool.exchange(
             int8(direction ? 0 : 1),
             int8(direction ? 1 : 0),
@@ -145,7 +153,6 @@ contract SwapRouter is ISwapRouter {
         require(recipient != address(0), "SwapRouter :: recipient");
 
         _3CRV.safeTransferFrom(msg.sender, address(this), amount);
-        _3CRV.safeApprove(address(_3crvPool), amount);
         /// @dev i = 1 --> USDC
         _3crvPool.remove_liquidity_one_coin(amount, 1, 0);
 
@@ -175,8 +182,6 @@ contract SwapRouter is ISwapRouter {
         uint256 slippage,
         bytes memory data
     ) internal {
-        token0.safeApprove(address(oneInchRouter), amount);
-
         SwapDescription memory desc = SwapDescription({
             srcToken: IERC20(address(token0)),
             dstToken: IERC20(address(token1)),

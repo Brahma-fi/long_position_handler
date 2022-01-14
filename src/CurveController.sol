@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 import "./interface/ISwapRouter.sol";
 import "./interface/IConvexRewards.sol";
 import "./interface/IPositionHandler.sol";
+import {ICurveController} from "./interface/ICurveController.sol";
 
 import "./library/Math.sol";
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract CurveController is IPositionHandler {
+contract CurveController is ICurveController {
     using SafeERC20 for IERC20;
     using SafeERC20 for IERC20Metadata;
 
