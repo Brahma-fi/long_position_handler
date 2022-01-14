@@ -47,8 +47,51 @@ contract CurveControllerTest is DSTest {
         emit log_named_address("Self", self());
     }
 
-    function testSuccess() public pure {
-        assert(true);
+    function testSuccessfulOpenPosition() public {
+        _swapOnUniswap(
+            address(WETH),
+            address(swapRouter.CRV()),
+            WETH.balanceOf(self())
+        );
+
+        uint256 crvBalance = swapRouter.CRV().balanceOf(self());
+        uint256 cvxcrvBalance = swapRouter.CVXCRV().balanceOf(self());
+        emit log_named_uint("CRV Balance", crvBalance);
+        emit log_named_uint("CVXCRV Balance", cvxcrvBalance);
+
+        swapRouter.CRV().approve(address(swapRouter), type(uint256).max);
+        swapRouter.swapOnCRVCVXCRVPool(true, crvBalance, self());
+
+        uint256 newCrvBalance = swapRouter.CRV().balanceOf(self());
+        uint256 newCvxcrvBalance = swapRouter.CVXCRV().balanceOf(self());
+        emit log_named_uint("CRV Balance", newCrvBalance);
+        emit log_named_uint("CVXCRV Balance", newCvxcrvBalance);
+
+        assertLt(newCrvBalance, crvBalance);
+        assertGt(newCvxcrvBalance, cvxcrvBalance);
+
+        uint256 convexPoolPosition = curveController.baseRewardPool().balanceOf(
+            self()
+        );
+        swapRouter.CVXCRV().approve(
+            address(curveController.baseRewardPool()),
+            newCvxcrvBalance
+        );
+        require(
+            curveController.baseRewardPool().stakeAll(),
+            "CurveController :: staking"
+        );
+        uint256 newConvexPoolPosition = curveController
+            .baseRewardPool()
+            .balanceOf(self());
+
+        emit log_named_uint(
+            "CVXCRV Balance",
+            swapRouter.CVXCRV().balanceOf(self())
+        );
+        emit log_named_uint("Convex Pool Position", newConvexPoolPosition);
+        assertLt(swapRouter.CVXCRV().balanceOf(self()), newCvxcrvBalance);
+        assertGt(newConvexPoolPosition, convexPoolPosition);
     }
 
     function swapAndGetBalances(uint256 _ethToSwap) internal {
@@ -56,25 +99,28 @@ contract CurveControllerTest is DSTest {
 
         WETH.deposit{value: _ethToSwap * 10**18}();
         uint256 WETHBalance = WETH.balanceOf(self());
-        WETH.approve(address(UniswapRouter), WETHBalance);
+        emit log_named_uint("WETH Balance", WETHBalance / 10**WETH.decimals());
 
+        WETH.approve(address(UniswapRouter), WETHBalance);
+    }
+
+    function _swapOnUniswap(
+        address tokenIn,
+        address tokenOut,
+        uint256 amount
+    ) internal {
         IUniswapSwapRouter.ExactInputSingleParams
             memory params = IUniswapSwapRouter.ExactInputSingleParams({
-                tokenIn: address(WETH),
-                tokenOut: address(USDC),
+                tokenIn: tokenIn,
+                tokenOut: tokenOut,
                 fee: 3000,
                 recipient: self(),
                 deadline: block.timestamp,
-                amountIn: WETHBalance,
+                amountIn: amount,
                 amountOutMinimum: 0,
                 sqrtPriceLimitX96: 0
             });
         UniswapRouter.exactInputSingle(params);
-
-        emit log_named_uint(
-            "USDC Balance",
-            USDC.balanceOf(self()) / 10**USDC.decimals()
-        );
     }
 
     function self() internal view returns (address) {
