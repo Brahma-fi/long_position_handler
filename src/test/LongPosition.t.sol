@@ -14,7 +14,7 @@ import "./utils/IUniswapSwapRouter.sol";
 
 import "@ds-test/test.sol";
 
-contract CurveControllerTest is DSTest {
+contract LongPositionTest is DSTest {
     SwapRouter private swapRouter;
     CurveController private curveController;
 
