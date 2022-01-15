@@ -54,7 +54,10 @@ contract LongPositionTest is DSTest {
     function testSuccessfulClosePosition() public {
         _openPosition();
         uint256 initialCvxCRV = swapRouter.CVXCRV().balanceOf(self());
-        longPositionHandler.baseRewardPool().withdrawAll(true);
+        longPositionHandler.baseRewardPool().withdraw(
+            longPositionHandler.baseRewardPool().balanceOf(self()),
+            true
+        );
 
         emit log_string("--AFTER POSITION CLOSE--");
 

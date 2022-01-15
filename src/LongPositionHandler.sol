@@ -78,8 +78,8 @@ contract LongPositionHandler is ILongPositionHandler {
             "CurveController :: amount"
         );
 
-        /// Unstake and claim all rewards from convex
-        baseRewardPool.withdrawAll(true);
+        /// Unstake _amount and claim rewards from convex
+        baseRewardPool.withdraw(_amount, true);
 
         /// Convert cvxCRV -> CRV on curve
         swapRouter.swapOnCRVCVXCRVPool(
