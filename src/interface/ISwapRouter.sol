@@ -6,22 +6,22 @@ import "./ICurvePool.sol";
 import "./IAggregationRouter.sol";
 import "./IChainlinkAggregatorV3.sol";
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {ERC20} from "@solmate/tokens/ERC20.sol";
 
 interface ISwapRouter {
     /// CONSTANTS
-    function USDC() external returns (IERC20Metadata);
+    function USDC() external returns (ERC20);
 
     function governance() external returns (address);
 
     /// CURVE POOL (CRV/CVXCRV)
-    function CRV() external returns (IERC20Metadata);
+    function CRV() external returns (ERC20);
 
-    function CVX() external returns (IERC20Metadata);
+    function CVX() external returns (ERC20);
 
-    function CVXCRV() external returns (IERC20Metadata);
+    function CVXCRV() external returns (ERC20);
 
-    function _3CRV() external returns (IERC20Metadata);
+    function _3CRV() external returns (ERC20);
 
     function crvcvxcrvPool() external returns (ICurvePool);
 

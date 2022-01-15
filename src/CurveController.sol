@@ -8,11 +8,11 @@ import {ICurveController} from "./interface/ICurveController.sol";
 
 import "./library/Math.sol";
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
+import {ERC20} from "@solmate/tokens/ERC20.sol";
 
 contract CurveController is ICurveController {
-    using SafeERC20 for IERC20;
-    using SafeERC20 for IERC20Metadata;
+    using SafeTransferLib for ERC20;
 
     ISwapRouter public swapRouter;
     // 0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e
@@ -125,6 +125,12 @@ contract CurveController is ICurveController {
 
     function deposit(uint256 _amount) external validTransaction(_amount) {
         swapRouter.USDC().safeTransferFrom(msg.sender, address(this), _amount);
+        SafeTransferLib.safeTransferFrom(
+            swapRouter.USDC(),
+            msg.sender,
+            address(this),
+            _amount
+        );
     }
 
     function withdraw(uint256 _amount)
@@ -228,9 +234,7 @@ contract CurveController is ICurveController {
         );
     }
 
-    function _safeApproveIfNotApproved(IERC20Metadata token, address spender)
-        internal
-    {
+    function _safeApproveIfNotApproved(ERC20 token, address spender) internal {
         if (token.allowance(address(this), spender) < type(uint256).max) {
             token.safeApprove(spender, type(uint256).max);
         }

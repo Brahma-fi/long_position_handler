@@ -9,21 +9,22 @@ import "./interface/ICurvePool.sol";
 
 import "./utils/Console.sol";
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
+import {ERC20} from "@solmate/tokens/ERC20.sol";
 
 contract SwapRouter is ISwapRouter {
-    using SafeERC20 for IERC20Metadata;
+    using SafeTransferLib for ERC20;
 
-    IERC20Metadata public immutable override USDC =
-        IERC20Metadata(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-    IERC20Metadata public immutable override CRV =
-        IERC20Metadata(0xD533a949740bb3306d119CC777fa900bA034cd52);
-    IERC20Metadata public immutable override CVX =
-        IERC20Metadata(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
-    IERC20Metadata public immutable override CVXCRV =
-        IERC20Metadata(0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7);
-    IERC20Metadata public immutable override _3CRV =
-        IERC20Metadata(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
+    ERC20 public immutable override USDC =
+        ERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    ERC20 public immutable override CRV =
+        ERC20(0xD533a949740bb3306d119CC777fa900bA034cd52);
+    ERC20 public immutable override CVX =
+        ERC20(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);
+    ERC20 public immutable override CVXCRV =
+        ERC20(0x62B9c7356A2Dc64a1969e19C23e4f579F9810Aa7);
+    ERC20 public immutable override _3CRV =
+        ERC20(0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
 
     // 0x1111111254fb6c44bAC0beD2854e76F90643097d
     IAggregationRouter public override oneInchRouter;
@@ -89,8 +90,8 @@ contract SwapRouter is ISwapRouter {
         require(amountToSwap > 0, "SwapRouter :: amountToSwap");
         require(slippage > 0 && slippage <= 100, "SwapRouter :: slippage");
 
-        IERC20Metadata token0 = direction ? USDC : IERC20Metadata(token);
-        IERC20Metadata token1 = direction ? IERC20Metadata(token) : USDC;
+        ERC20 token0 = direction ? USDC : ERC20(token);
+        ERC20 token1 = direction ? ERC20(token) : USDC;
 
         token0.safeTransferFrom(recipient, address(this), amountToSwap);
 
@@ -117,8 +118,8 @@ contract SwapRouter is ISwapRouter {
         uint256 amount,
         address recipient
     ) external override returns (uint256 amountOut) {
-        IERC20Metadata swapToken = direction ? CRV : CVXCRV;
-        IERC20Metadata recievedToken = direction ? CVXCRV : CRV;
+        ERC20 swapToken = direction ? CRV : CVXCRV;
+        ERC20 recievedToken = direction ? CVXCRV : CRV;
 
         require(
             amount > 0 && amount <= swapToken.balanceOf(msg.sender),
@@ -175,8 +176,8 @@ contract SwapRouter is ISwapRouter {
     }
 
     function _swapTokens(
-        IERC20Metadata token0,
-        IERC20Metadata token1,
+        ERC20 token0,
+        ERC20 token1,
         uint256 amount,
         uint256 minReturn,
         uint256 slippage,
