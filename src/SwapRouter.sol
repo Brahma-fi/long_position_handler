@@ -94,7 +94,8 @@ contract SwapRouter is ISwapRouter {
 
         token0.safeTransferFrom(recipient, address(this), amountToSwap);
 
-        uint256 expectedAmountOut = getTokenPriceInUSD(address(token1));
+        uint256 expectedAmountOut = getTokenPriceInUSD(address(token1)) *
+            amountToSwap;
 
         _swapTokens(
             token0,
@@ -174,6 +175,12 @@ contract SwapRouter is ISwapRouter {
         return (uint256(answer) / uint256(CRVUSD.decimals())) * USDC.decimals();
     }
 
+    function sweep(address _token) external override {
+        require(msg.sender == governance, "SwapRouter :: onlyGovernance");
+
+        ERC20(_token).safeTransfer(governance, USDC.balanceOf(address(this)));
+    }
+
     function _swapTokens(
         ERC20 token0,
         ERC20 token1,
@@ -198,13 +205,5 @@ contract SwapRouter is ISwapRouter {
             desc,
             data
         );
-    }
-
-    function sweep() external {
-        require(msg.sender == governance, "SwapRouter :: onlyGovernance");
-
-        USDC.transfer(governance, USDC.balanceOf(address(this)));
-        CRV.transfer(governance, CRV.balanceOf(address(this)));
-        CVX.transfer(governance, CVX.balanceOf(address(this)));
     }
 }

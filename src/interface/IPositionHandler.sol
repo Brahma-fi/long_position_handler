@@ -11,12 +11,6 @@ interface IPositionHandler {
 
     function closePosition(uint256 _amount) external;
 
-    function swapAllTokensToUSDC(
-        bytes memory _crvSwapData,
-        bytes memory _cvxSwapData,
-        uint256 _slippage
-    ) external;
-
     function deposit(uint256 _amount) external;
 
     function withdraw(uint256 _amount)
@@ -27,19 +21,9 @@ interface IPositionHandler {
             uint256 amountUnableToWithdraw
         );
 
-    function allBalances()
-        external
-        returns (
-            uint256 crvBalance,
-            uint256 cvxcrvBalance,
-            uint256 cvxBalance,
-            uint256 _3crvBalance,
-            uint256 usdcBalance
-        );
-
     function amountInPosition(address _token) external view returns (uint256);
 
-    function sweep() external;
+    function sweep(address _token) external;
 }
 
 // Long position handler accepts and gives back only want token i.e., USDC.

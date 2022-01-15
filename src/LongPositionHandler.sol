@@ -14,11 +14,11 @@ import {ERC20} from "@solmate/tokens/ERC20.sol";
 contract LongPositionHandler is ILongPositionHandler {
     using SafeTransferLib for ERC20;
 
-    ISwapRouter public swapRouter;
+    ISwapRouter public override swapRouter;
     // 0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e
-    IConvexRewards public baseRewardPool;
+    IConvexRewards public override baseRewardPool;
 
-    address public governance;
+    address public override governance;
 
     constructor(
         ISwapRouter _swapRouter,
@@ -47,7 +47,7 @@ contract LongPositionHandler is ILongPositionHandler {
         bool _isLong,
         uint256 _slippage,
         bytes memory _data
-    ) external {
+    ) external override {
         require(_isLong, "CurveController :: not long");
         require(
             _amount > 0 &&
@@ -72,7 +72,7 @@ contract LongPositionHandler is ILongPositionHandler {
         require(baseRewardPool.stakeAll(), "CurveController :: staking");
     }
 
-    function closePosition(uint256 _amount) external {
+    function closePosition(uint256 _amount) external override {
         require(
             _amount > 0 && _amount <= baseRewardPool.balanceOf(address(this)),
             "CurveController :: amount"
@@ -93,7 +93,7 @@ contract LongPositionHandler is ILongPositionHandler {
         bytes memory _crvSwapData,
         bytes memory _cvxSwapData,
         uint256 _slippage
-    ) external {
+    ) external override {
         /// Convert CRV -> USDC on 1inch
         if (swapRouter.CRV().balanceOf(address(this)) > 0) {
             swapRouter.estimateAndSwapTokens(
@@ -127,7 +127,11 @@ contract LongPositionHandler is ILongPositionHandler {
         }
     }
 
-    function deposit(uint256 _amount) external validTransaction(_amount) {
+    function deposit(uint256 _amount)
+        external
+        override
+        validTransaction(_amount)
+    {
         swapRouter.USDC().safeTransferFrom(msg.sender, address(this), _amount);
         SafeTransferLib.safeTransferFrom(
             swapRouter.USDC(),
@@ -139,6 +143,7 @@ contract LongPositionHandler is ILongPositionHandler {
 
     function withdraw(uint256 _amount)
         external
+        override
         validTransaction(_amount)
         returns (
             uint256 amountWithdrawn,
@@ -209,32 +214,21 @@ contract LongPositionHandler is ILongPositionHandler {
         usdcBalance = swapRouter.USDC().balanceOf(address(this));
     }
 
-    function amountInPosition(address _token) external view returns (uint256) {
-        return IERC20(_token).balanceOf(address(this));
+    function amountInPosition(address _token)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return ERC20(_token).balanceOf(address(this));
     }
 
-    function sweep() external {
+    function sweep(address _token) external override {
         require(msg.sender == governance, "CurveController :: Governance");
 
-        swapRouter.CRV().transfer(
+        ERC20(_token).safeTransfer(
             governance,
             swapRouter.CRV().balanceOf(address(this))
-        );
-        swapRouter.CVXCRV().transfer(
-            governance,
-            swapRouter.CVXCRV().balanceOf(address(this))
-        );
-        swapRouter.CVX().transfer(
-            governance,
-            swapRouter.CVX().balanceOf(address(this))
-        );
-        swapRouter._3CRV().transfer(
-            governance,
-            swapRouter._3CRV().balanceOf(address(this))
-        );
-        swapRouter.USDC().transfer(
-            governance,
-            swapRouter.USDC().balanceOf(address(this))
         );
     }
 
