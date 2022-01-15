@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
-import "../CurveController.sol";
+import "../LongPositionHandler.sol";
 import "../SwapRouter.sol";
 
 import {IAggregationRouter} from "../interface/IAggregationRouter.sol";
@@ -16,7 +16,7 @@ import "@ds-test/test.sol";
 
 contract LongPositionTest is DSTest {
     SwapRouter private swapRouter;
-    CurveController private curveController;
+    LongPositionHandler private longPositionHandler;
 
     IUniswapSwapRouter private immutable UniswapRouter =
         IUniswapSwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
@@ -36,7 +36,7 @@ contract LongPositionTest is DSTest {
             self()
         );
 
-        curveController = new CurveController(
+        longPositionHandler = new LongPositionHandler(
             ISwapRouter(address(swapRouter)),
             IConvexRewards(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e),
             self()
@@ -54,7 +54,7 @@ contract LongPositionTest is DSTest {
     function testSuccessfulClosePosition() public {
         _openPosition();
         uint256 initialCvxCRV = swapRouter.CVXCRV().balanceOf(self());
-        curveController.baseRewardPool().withdrawAll(true);
+        longPositionHandler.baseRewardPool().withdrawAll(true);
 
         emit log_string("--AFTER POSITION CLOSE--");
 
@@ -71,12 +71,12 @@ contract LongPositionTest is DSTest {
         emit log_named_uint("usdcBalance", swapRouter.USDC().balanceOf(self()));
         emit log_named_uint(
             "Convex Pool Position",
-            curveController.baseRewardPool().balanceOf(self())
+            longPositionHandler.baseRewardPool().balanceOf(self())
         );
 
         assertEq(
             initialCvxCRV,
-            curveController.baseRewardPool().balanceOf(self())
+            longPositionHandler.baseRewardPool().balanceOf(self())
         );
     }
 
@@ -116,18 +116,18 @@ contract LongPositionTest is DSTest {
         assertGt(newCvxcrvBalance, cvxcrvBalance);
 
         emit log_string("--STAKE ON CONVEX--");
-        uint256 convexPoolPosition = curveController.baseRewardPool().balanceOf(
-            self()
-        );
+        uint256 convexPoolPosition = longPositionHandler
+            .baseRewardPool()
+            .balanceOf(self());
         swapRouter.CVXCRV().approve(
-            address(curveController.baseRewardPool()),
+            address(longPositionHandler.baseRewardPool()),
             newCvxcrvBalance
         );
         require(
-            curveController.baseRewardPool().stakeAll(),
-            "CurveController :: staking"
+            longPositionHandler.baseRewardPool().stakeAll(),
+            "longPositionHandler :: staking"
         );
-        uint256 newConvexPoolPosition = curveController
+        uint256 newConvexPoolPosition = longPositionHandler
             .baseRewardPool()
             .balanceOf(self());
 

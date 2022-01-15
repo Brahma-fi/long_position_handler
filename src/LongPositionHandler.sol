@@ -4,14 +4,14 @@ pragma solidity ^0.8.0;
 import "./interface/ISwapRouter.sol";
 import "./interface/IConvexRewards.sol";
 import "./interface/IPositionHandler.sol";
-import {ICurveController} from "./interface/ICurveController.sol";
+import {ILongPositionHandler} from "./interface/ILongPositionHandler.sol";
 
 import "./library/Math.sol";
 
 import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {ERC20} from "@solmate/tokens/ERC20.sol";
 
-contract CurveController is ICurveController {
+contract LongPositionHandler is ILongPositionHandler {
     using SafeTransferLib for ERC20;
 
     ISwapRouter public swapRouter;

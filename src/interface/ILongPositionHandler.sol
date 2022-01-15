@@ -5,7 +5,7 @@ import "./ISwapRouter.sol";
 import "./IConvexRewards.sol";
 import "./IPositionHandler.sol";
 
-interface ICurveController is IPositionHandler {
+interface ILongPositionHandler is IPositionHandler {
     function swapRouter() external returns (ISwapRouter);
 
     function baseRewardPool() external returns (IConvexRewards);
