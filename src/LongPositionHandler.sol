@@ -29,6 +29,17 @@ contract LongPositionHandler is ILongPositionHandler {
         baseRewardPool = _baseRewardPool;
 
         governance = _governance;
+
+        swapRouter.USDC().safeApprove(address(swapRouter), type(uint256).max);
+        swapRouter.CRV().safeApprove(address(swapRouter), type(uint256).max);
+        swapRouter.CVXCRV().safeApprove(address(swapRouter), type(uint256).max);
+        swapRouter.CVX().safeApprove(address(swapRouter), type(uint256).max);
+        swapRouter._3CRV().safeApprove(address(swapRouter), type(uint256).max);
+
+        swapRouter.CVXCRV().safeApprove(
+            address(baseRewardPool),
+            type(uint256).max
+        );
     }
 
     function openPosition(
@@ -45,7 +56,6 @@ contract LongPositionHandler is ILongPositionHandler {
         );
 
         /// Convert USDC -> CRV on 1inch
-        _safeApproveIfNotApproved(swapRouter.USDC(), address(swapRouter));
         uint256 receivedCRV = swapRouter.estimateAndSwapTokens(
             true,
             address(swapRouter.CRV()),
@@ -56,11 +66,9 @@ contract LongPositionHandler is ILongPositionHandler {
         );
 
         /// Convert CRV -> cvxCRV on Curve
-        _safeApproveIfNotApproved(swapRouter.CRV(), address(swapRouter));
         swapRouter.swapOnCRVCVXCRVPool(true, receivedCRV, address(this));
 
         /// Stake all cvxCRV on convex
-        _safeApproveIfNotApproved(swapRouter.CVXCRV(), address(baseRewardPool));
         require(baseRewardPool.stakeAll(), "CurveController :: staking");
     }
 
@@ -74,7 +82,6 @@ contract LongPositionHandler is ILongPositionHandler {
         baseRewardPool.withdrawAll(true);
 
         /// Convert cvxCRV -> CRV on curve
-        _safeApproveIfNotApproved(swapRouter.CVXCRV(), address(swapRouter));
         swapRouter.swapOnCRVCVXCRVPool(
             false,
             swapRouter.CVXCRV().balanceOf(address(this)),
@@ -89,7 +96,6 @@ contract LongPositionHandler is ILongPositionHandler {
     ) external {
         /// Convert CRV -> USDC on 1inch
         if (swapRouter.CRV().balanceOf(address(this)) > 0) {
-            _safeApproveIfNotApproved(swapRouter.CRV(), address(swapRouter));
             swapRouter.estimateAndSwapTokens(
                 false,
                 address(swapRouter.CRV()),
@@ -102,7 +108,6 @@ contract LongPositionHandler is ILongPositionHandler {
 
         /// Convert CVX to USDC on 1inch
         if (swapRouter.CVX().balanceOf(address(this)) > 0) {
-            _safeApproveIfNotApproved(swapRouter.CVX(), address(swapRouter));
             swapRouter.estimateAndSwapTokens(
                 false,
                 address(swapRouter.CVX()),
@@ -115,7 +120,6 @@ contract LongPositionHandler is ILongPositionHandler {
 
         /// Burn 3CRV to get USDC on Curve
         if (swapRouter._3CRV().balanceOf(address(this)) > 0) {
-            _safeApproveIfNotApproved(swapRouter._3CRV(), address(swapRouter));
             swapRouter.burn3CRVForUSDC(
                 swapRouter._3CRV().balanceOf(address(this)),
                 address(this)
@@ -232,12 +236,6 @@ contract LongPositionHandler is ILongPositionHandler {
             governance,
             swapRouter.USDC().balanceOf(address(this))
         );
-    }
-
-    function _safeApproveIfNotApproved(ERC20 token, address spender) internal {
-        if (token.allowance(address(this), spender) < type(uint256).max) {
-            token.safeApprove(spender, type(uint256).max);
-        }
     }
 
     modifier validTransaction(uint256 _amount) {
