@@ -8,6 +8,7 @@ import {IAggregationRouter} from "../interface/IAggregationRouter.sol";
 import {IChainlinkAggregatorV3} from "../interface/IChainlinkAggregatorV3.sol";
 import {ICurvePool} from "../interface/ICurvePool.sol";
 import {IConvexRewards} from "../interface/IConvexRewards.sol";
+import {ICrvDepositor} from "../interface/ICrvDepositor.sol";
 
 import "./utils/IWETH9.sol";
 import "./utils/IUniswapSwapRouter.sol";
@@ -39,6 +40,7 @@ contract LongPositionTest is DSTest {
         longPositionHandler = new LongPositionHandler(
             ISwapRouter(address(swapRouter)),
             IConvexRewards(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e),
+            ICrvDepositor(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae),
             self()
         );
 

@@ -3,12 +3,15 @@ pragma solidity ^0.8.0;
 
 import "./ISwapRouter.sol";
 import "./IConvexRewards.sol";
+import "./ICrvDepositor.sol";
 import "./IPositionHandler.sol";
 
 interface ILongPositionHandler is IPositionHandler {
     function swapRouter() external returns (ISwapRouter);
 
     function baseRewardPool() external returns (IConvexRewards);
+
+    function crvDepositor() external returns (ICrvDepositor);
 
     function governance() external returns (address);
 

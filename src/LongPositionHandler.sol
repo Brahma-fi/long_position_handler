@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./interface/ISwapRouter.sol";
 import "./interface/IConvexRewards.sol";
+import "./interface/ICrvDepositor.sol";
 import "./interface/IPositionHandler.sol";
 import {ILongPositionHandler} from "./interface/ILongPositionHandler.sol";
 
@@ -17,16 +18,20 @@ contract LongPositionHandler is ILongPositionHandler {
     ISwapRouter public override swapRouter;
     // 0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e
     IConvexRewards public override baseRewardPool;
+    // 0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae
+    ICrvDepositor public override crvDepositor;
 
     address public override governance;
 
     constructor(
         ISwapRouter _swapRouter,
         IConvexRewards _baseRewardPool,
+        ICrvDepositor _crvDepositor,
         address _governance
     ) {
         swapRouter = _swapRouter;
         baseRewardPool = _baseRewardPool;
+        crvDepositor = _crvDepositor;
 
         governance = _governance;
 
@@ -65,11 +70,23 @@ contract LongPositionHandler is ILongPositionHandler {
             _data
         );
 
-        /// Convert CRV -> cvxCRV on Curve
-        swapRouter.swapOnCRVCVXCRVPool(true, receivedCRV, address(this));
+        /// Check for expected cvxCRV after swap on curve
+        uint256 expectedCvxCrv = swapRouter.crvcvxcrvPool().get_dy(
+            0,
+            1,
+            receivedCRV
+        );
 
-        /// Stake all cvxCRV on convex
-        require(baseRewardPool.stakeAll(), "CurveController :: staking");
+        /// If swap on curve is better than 1:1 on convex
+        if (receivedCRV < expectedCvxCrv) {
+            /// Convert CRV -> cvxCRV on Curve
+            swapRouter.swapOnCRVCVXCRVPool(true, receivedCRV, address(this));
+            /// Stake all cvxCRV on convex
+            require(baseRewardPool.stakeAll(), "CurveController :: staking");
+        } else {
+            /// Else convert & stake directly on convex
+            crvDepositor.deposit(receivedCRV, false, address(baseRewardPool));
+        }
     }
 
     function closePosition(uint256 _amount) external override {
