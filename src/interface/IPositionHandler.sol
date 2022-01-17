@@ -1,19 +1,30 @@
+/// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.0;
 
 interface IPositionHandler {
+    function openPosition(
+        uint256 _amount,
+        bool _isLong,
+        uint256 _slippage,
+        bytes memory _data
+    ) external;
 
-    function openPosition(address _token, uint256 _amount, bool _isLong) external;
+    function closePosition(uint256 _amount) external;
 
-    function closePosition(address _token, uint256 _amount) external;
+    function deposit(uint256 _amount) external;
 
-    function deposit(address _token, uint256 _amount) external;
-
-    function withdraw(address _token, uint256 _amount) external;
+    function withdraw(uint256 _amount)
+        external
+        returns (
+            uint256 amountWithdrawn,
+            uint256 pendingWithdrawal,
+            uint256 amountUnableToWithdraw
+        );
 
     function amountInPosition(address _token) external view returns (uint256);
 
+    function sweep(address _token) external;
 }
-
 
 // Long position handler accepts and gives back only want token i.e., USDC.
 // Once recieved USDC --> router --> which accepts destination token --> CRV/CVXCRV depending upon the price.
@@ -21,5 +32,3 @@ interface IPositionHandler {
 // rewards --> 3 tokens CVX, 3crvlp token, crv token.
 // CVXCRV <--> USDC integration with 1inch as seperate module.
 // CVXCRV --> CRV in curve pool. CRV --> USDC in curve pool.
-
-
