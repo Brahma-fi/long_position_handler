@@ -15,8 +15,10 @@ interface ILongPositionHandler is IPositionHandler {
 
     function governance() external returns (address);
 
-    function swapBalanceToUSDC(bytes memory _cvxcrvSwapData, uint256 _slippage)
-        external;
+    function convertBalanceAndWithdraw(
+        bytes memory _cvxcrvSwapData,
+        uint256 _slippage
+    ) external;
 
     function closePositionAndCompound(bool compoundOnlyRewards)
         external
