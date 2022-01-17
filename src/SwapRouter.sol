@@ -101,7 +101,7 @@ contract SwapRouter is ISwapRouter {
         address recipient,
         uint256 slippage,
         bytes memory data
-    ) external override returns (uint256 amountOut) {
+    ) external override onlyHandler returns (uint256 amountOut) {
         require(
             token != address(CRV) && token != address(CVX),
             "SwapRouter :: token"
@@ -136,7 +136,7 @@ contract SwapRouter is ISwapRouter {
         bool direction,
         uint256 amount,
         address recipient
-    ) external override returns (uint256 amountOut) {
+    ) external override onlyHandler returns (uint256 amountOut) {
         ERC20 swapToken = direction ? CRV : CVXCRV;
         ERC20 recievedToken = direction ? CVXCRV : CRV;
 
@@ -164,6 +164,7 @@ contract SwapRouter is ISwapRouter {
     function burn3CRVForUSDC(uint256 amount, address recipient)
         external
         override
+        onlyHandler
         returns (uint256 amountOut)
     {
         require(
