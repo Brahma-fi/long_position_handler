@@ -132,12 +132,10 @@ contract LongPositionHandler is ILongPositionHandler {
         return baseRewardPool.balanceOf(address(this));
     }
 
-    function swapBalanceToUSDC(
-        bytes memory _crvSwapData,
-        bytes memory _cvxSwapData,
-        bytes memory _cvxcrvSwapData,
-        uint256 _slippage
-    ) external override {
+    function swapBalanceToUSDC(bytes memory _cvxcrvSwapData, uint256 _slippage)
+        external
+        override
+    {
         require(
             _slippage > 0 && _slippage <= 100,
             "LongPositionHandler :: slippage"
@@ -152,38 +150,6 @@ contract LongPositionHandler is ILongPositionHandler {
                 address(this),
                 _slippage,
                 _cvxcrvSwapData
-            );
-        }
-
-        /// Convert CRV -> USDC on 1inch
-        if (swapRouter.CRV().balanceOf(address(this)) > 0) {
-            swapRouter.estimateAndSwapTokens(
-                false,
-                address(swapRouter.CRV()),
-                swapRouter.CRV().balanceOf(address(this)),
-                address(this),
-                _slippage,
-                _crvSwapData
-            );
-        }
-
-        /// Convert CVX to USDC on 1inch
-        if (swapRouter.CVX().balanceOf(address(this)) > 0) {
-            swapRouter.estimateAndSwapTokens(
-                false,
-                address(swapRouter.CVX()),
-                swapRouter.CVX().balanceOf(address(this)),
-                address(this),
-                _slippage,
-                _cvxSwapData
-            );
-        }
-
-        /// Burn 3CRV to get USDC on Curve
-        if (swapRouter._3CRV().balanceOf(address(this)) > 0) {
-            swapRouter.burn3CRVForUSDC(
-                swapRouter._3CRV().balanceOf(address(this)),
-                address(this)
             );
         }
     }
