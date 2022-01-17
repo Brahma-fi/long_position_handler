@@ -20,7 +20,7 @@ interface ILongPositionHandler is IPositionHandler {
         uint256 _slippage
     ) external;
 
-    function closePositionAndCompound(bool compoundOnlyRewards)
+    function closePositionAndCompound(bool compoundRewards)
         external
         returns (uint256);
 

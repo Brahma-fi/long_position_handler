@@ -102,7 +102,7 @@ contract LongPositionHandler is ILongPositionHandler {
         baseRewardPool.withdrawAndUnwrap(_amount, true);
     }
 
-    function closePositionAndCompound(bool compoundOnlyRewards)
+    function closePositionAndCompound(bool compoundRewards)
         external
         override
         returns (uint256)
@@ -112,13 +112,10 @@ contract LongPositionHandler is ILongPositionHandler {
         baseRewardPool.withdrawAllAndUnwrap(true);
 
         /// Stake back balances
-        if (compoundOnlyRewards) {
-            /// Stake only rewards in CVXCRV
-            uint256 rewardedCVXCRV = swapRouter.CVXCRV().balanceOf(
-                address(this)
-            ) - stakedCVXCRV;
+        if (!compoundRewards) {
+            /// Stake only principal
             require(
-                baseRewardPool.stake(rewardedCVXCRV),
+                baseRewardPool.stake(stakedCVXCRV),
                 "LongPositionHandler :: staking"
             );
         } else {
