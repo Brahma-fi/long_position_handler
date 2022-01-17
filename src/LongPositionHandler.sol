@@ -53,11 +53,11 @@ contract LongPositionHandler is ILongPositionHandler {
         uint256 _slippage,
         bytes memory _data
     ) external override {
-        require(_isLong, "CurveController :: not long");
+        require(_isLong, "LongPositionHandler :: not long");
         require(
             _amount > 0 &&
                 _amount <= swapRouter.USDC().balanceOf(address(this)),
-            "CurveController :: amount"
+            "LongPositionHandler :: amount"
         );
 
         /// Convert USDC -> CRV on 1inch
@@ -82,7 +82,10 @@ contract LongPositionHandler is ILongPositionHandler {
             /// Convert CRV -> cvxCRV on Curve
             swapRouter.swapOnCRVCVXCRVPool(true, receivedCRV, address(this));
             /// Stake all cvxCRV on convex
-            require(baseRewardPool.stakeAll(), "CurveController :: staking");
+            require(
+                baseRewardPool.stakeAll(),
+                "LongPositionHandler :: staking"
+            );
         } else {
             /// Else convert & stake directly on convex
             crvDepositor.deposit(receivedCRV, false, address(baseRewardPool));
@@ -92,7 +95,7 @@ contract LongPositionHandler is ILongPositionHandler {
     function closePosition(uint256 _amount) external override {
         require(
             _amount > 0 && _amount <= baseRewardPool.balanceOf(address(this)),
-            "CurveController :: amount"
+            "LongPositionHandler :: amount"
         );
 
         /// Unstake _amount and claim rewards from convex
@@ -241,7 +244,7 @@ contract LongPositionHandler is ILongPositionHandler {
     }
 
     function sweep(address _token) external override {
-        require(msg.sender == governance, "CurveController :: Governance");
+        require(msg.sender == governance, "onlyGovernance");
 
         ERC20(_token).safeTransfer(
             governance,
@@ -250,7 +253,7 @@ contract LongPositionHandler is ILongPositionHandler {
     }
 
     modifier validTransaction(uint256 _amount) {
-        require(_amount > 0, "CurveController :: amount");
+        require(_amount > 0, "LongPositionHandler :: amount");
         _;
     }
 }

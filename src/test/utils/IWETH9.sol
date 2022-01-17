@@ -1,4 +1,5 @@
-pragma solidity >=0.4.0;
+/// SPDX-License-Identifier: Unlicensed
+pragma solidity ^0.8.0;
 
 interface IWETH9 {
     function name() external view returns (string memory);

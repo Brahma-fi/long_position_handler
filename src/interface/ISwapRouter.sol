@@ -36,7 +36,12 @@ interface ISwapRouter {
 
     function CVXUSD() external returns (IChainlinkAggregatorV3);
 
+    // Owner :: Long Position Handler
+    function positionHandlers(address handler) external returns (bool);
+
     /// FUNCTIONS
+    function addPositionHandler(address _positionHandler) external;
+
     function estimateAndSwapTokens(
         bool direction,
         address token,

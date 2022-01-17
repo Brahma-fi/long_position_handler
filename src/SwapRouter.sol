@@ -42,6 +42,8 @@ contract SwapRouter is ISwapRouter {
 
     address public override governance;
 
+    mapping(address => bool) public override positionHandlers;
+
     constructor(
         IAggregationRouter _oneInchRouter,
         address _aggregationExecutor,
@@ -70,6 +72,24 @@ contract SwapRouter is ISwapRouter {
         CVXCRV.safeApprove(address(crvcvxcrvPool), type(uint256).max);
 
         _3CRV.safeApprove(address(_3crvPool), type(uint256).max);
+    }
+
+    function addPositionHandler(address _positionHandler)
+        external
+        onlyGovernance
+    {
+        require(_positionHandler != address(0), "SwapRouter :: zero address");
+        require(
+            !(positionHandlers[_positionHandler]),
+            "SwapRouter :: zero address"
+        );
+
+        positionHandlers[_positionHandler] = true;
+
+        USDC.safeApprove(_positionHandler, type(uint256).max);
+        CRV.safeApprove(_positionHandler, type(uint256).max);
+        CVXCRV.safeApprove(_positionHandler, type(uint256).max);
+        CVX.safeApprove(_positionHandler, type(uint256).max);
     }
 
     /// @dev Direction => True => USDC -> Token
@@ -105,7 +125,6 @@ contract SwapRouter is ISwapRouter {
             slippage,
             data
         );
-        amountOut = token1.balanceOf(address(this));
 
         token1.safeTransfer(recipient, amountOut);
         token0.safeTransfer(recipient, token0.balanceOf(address(this)));
@@ -175,9 +194,7 @@ contract SwapRouter is ISwapRouter {
         return (uint256(answer) / uint256(CRVUSD.decimals())) * USDC.decimals();
     }
 
-    function sweep(address _token) external override {
-        require(msg.sender == governance, "SwapRouter :: onlyGovernance");
-
+    function sweep(address _token) external override onlyGovernance {
         ERC20(_token).safeTransfer(governance, USDC.balanceOf(address(this)));
     }
 
@@ -205,5 +222,15 @@ contract SwapRouter is ISwapRouter {
             desc,
             data
         );
+    }
+
+    modifier onlyGovernance() {
+        require(msg.sender == governance, "SwapRouter :: onlyGovernance");
+        _;
+    }
+
+    modifier onlyHandler() {
+        require(positionHandlers[msg.sender], "SwapRouter :: onlyHandler");
+        _;
     }
 }
