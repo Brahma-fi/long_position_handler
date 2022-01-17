@@ -33,4 +33,14 @@ interface ILongPositionHandler is IPositionHandler {
             uint256 _3crvBalance,
             uint256 usdcBalance
         );
+
+    function balancesInUSDC()
+        external
+        returns (
+            uint256 _crv,
+            uint256 _cvx,
+            uint256 _cvxcrv,
+            uint256 _3crv,
+            uint256 _usdc
+        );
 }

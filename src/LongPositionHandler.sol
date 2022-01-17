@@ -227,7 +227,7 @@ contract LongPositionHandler is ILongPositionHandler {
     }
 
     function allBalances()
-        external
+        public
         override
         returns (
             uint256 crvBalance,
@@ -237,11 +237,47 @@ contract LongPositionHandler is ILongPositionHandler {
             uint256 usdcBalance
         )
     {
-        crvBalance = swapRouter.CRV().balanceOf(address(this));
-        cvxcrvBalance = swapRouter.CVXCRV().balanceOf(address(this));
-        cvxBalance = swapRouter.CVX().balanceOf(address(this));
-        _3crvBalance = swapRouter._3CRV().balanceOf(address(this));
-        usdcBalance = swapRouter.USDC().balanceOf(address(this));
+        (
+            crvBalance,
+            cvxcrvBalance,
+            cvxBalance,
+            _3crvBalance,
+            usdcBalance
+        ) = _getBalances();
+    }
+
+    function balancesInUSDC()
+        external
+        returns (
+            uint256 _crv,
+            uint256 _cvx,
+            uint256 _cvxcrv,
+            uint256 _3crv,
+            uint256 _usdc
+        )
+    {
+        (
+            uint256 crvBalance,
+            uint256 cvxcrvBalance,
+            uint256 cvxBalance,
+            uint256 _3crvBalance,
+            uint256 usdcBalance
+        ) = _getBalances();
+        uint256 crvInUSDC = swapRouter.getTokenPriceInUSD(
+            address(swapRouter.CRV())
+        );
+
+        _usdc = usdcBalance;
+        _crv = crvBalance * crvInUSDC;
+        _cvx =
+            cvxBalance *
+            swapRouter.getTokenPriceInUSD(address(swapRouter.CVX()));
+        _cvxcrv =
+            swapRouter.crvcvxcrvPool().get_dy(1, 0, cvxcrvBalance) *
+            crvInUSDC;
+        _3crv =
+            (swapRouter._3crvPool().get_virtual_price() / 1e18) *
+            _3crvBalance;
     }
 
     function amountInPosition(address _token)
@@ -260,6 +296,23 @@ contract LongPositionHandler is ILongPositionHandler {
             governance,
             swapRouter.CRV().balanceOf(address(this))
         );
+    }
+
+    function _getBalances()
+        internal
+        returns (
+            uint256 crvBalance,
+            uint256 cvxcrvBalance,
+            uint256 cvxBalance,
+            uint256 _3crvBalance,
+            uint256 usdcBalance
+        )
+    {
+        crvBalance = swapRouter.CRV().balanceOf(address(this));
+        cvxcrvBalance = swapRouter.CVXCRV().balanceOf(address(this));
+        cvxBalance = swapRouter.CVX().balanceOf(address(this));
+        _3crvBalance = swapRouter._3CRV().balanceOf(address(this));
+        usdcBalance = swapRouter.USDC().balanceOf(address(this));
     }
 
     modifier validTransaction(uint256 _amount) {
