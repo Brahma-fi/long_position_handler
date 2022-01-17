@@ -102,6 +102,36 @@ contract LongPositionHandler is ILongPositionHandler {
         baseRewardPool.withdrawAndUnwrap(_amount, true);
     }
 
+    function closePositionAndCompound(bool compoundOnlyRewards)
+        external
+        override
+        returns (uint256)
+    {
+        uint256 stakedCVXCRV = baseRewardPool.balanceOf(address(this));
+        /// Unstake all and claim rewards from convex
+        baseRewardPool.withdrawAllAndUnwrap(true);
+
+        /// Stake back balances
+        if (compoundOnlyRewards) {
+            /// Stake only rewards in CVXCRV
+            uint256 rewardedCVXCRV = swapRouter.CVXCRV().balanceOf(
+                address(this)
+            ) - stakedCVXCRV;
+            require(
+                baseRewardPool.stake(rewardedCVXCRV),
+                "LongPositionHandler :: staking"
+            );
+        } else {
+            /// Stake the entire balance
+            require(
+                baseRewardPool.stakeAll(),
+                "LongPositionHandler :: staking"
+            );
+        }
+
+        return baseRewardPool.balanceOf(address(this));
+    }
+
     function swapBalanceToUSDC(
         bytes memory _crvSwapData,
         bytes memory _cvxSwapData,
@@ -220,10 +250,6 @@ contract LongPositionHandler is ILongPositionHandler {
             // unstake and withdraw cvxcrv
             baseRewardPool.withdraw(pendingAmount, false);
         }
-    }
-
-    function withdrawRewards() external override {
-        require(baseRewardPool.getReward(), "LongPositionHandler :: rewards");
     }
 
     function allBalances()

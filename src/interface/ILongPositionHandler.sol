@@ -22,7 +22,9 @@ interface ILongPositionHandler is IPositionHandler {
         uint256 _slippage
     ) external;
 
-    function withdrawRewards() external;
+    function closePositionAndCompound(bool compoundOnlyRewards)
+        external
+        returns (uint256);
 
     function allBalances()
         external
