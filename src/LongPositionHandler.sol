@@ -99,21 +99,32 @@ contract LongPositionHandler is ILongPositionHandler {
         );
 
         /// Unstake _amount and claim rewards from convex
-        baseRewardPool.withdraw(_amount, true);
-
-        /// Convert cvxCRV -> CRV on curve
-        swapRouter.swapOnCRVCVXCRVPool(
-            false,
-            swapRouter.CVXCRV().balanceOf(address(this)),
-            address(this)
-        );
+        baseRewardPool.withdrawAndUnwrap(_amount, true);
     }
 
-    function swapAllTokensToUSDC(
+    function swapBalanceToUSDC(
         bytes memory _crvSwapData,
         bytes memory _cvxSwapData,
+        bytes memory _cvxcrvSwapData,
         uint256 _slippage
     ) external override {
+        require(
+            _slippage > 0 && _slippage <= 100,
+            "LongPositionHandler :: slippage"
+        );
+
+        /// Convert CVXCRV -> USDC on 1inch
+        if (swapRouter.CVXCRV().balanceOf(address(this)) > 0) {
+            swapRouter.estimateAndSwapTokens(
+                false,
+                address(swapRouter.CVXCRV()),
+                swapRouter.CVXCRV().balanceOf(address(this)),
+                address(this),
+                _slippage,
+                _cvxcrvSwapData
+            );
+        }
+
         /// Convert CRV -> USDC on 1inch
         if (swapRouter.CRV().balanceOf(address(this)) > 0) {
             swapRouter.estimateAndSwapTokens(
@@ -206,14 +217,13 @@ contract LongPositionHandler is ILongPositionHandler {
                 0,
                 pendingAmount - cvxcrvInUSDCToUnstake
             );
-
-            /// swap cvxCRV for CRV
-            swapRouter.swapOnCRVCVXCRVPool(
-                false,
-                pendingWithdrawal,
-                address(this)
-            );
+            // unstake and withdraw cvxcrv
+            baseRewardPool.withdraw(pendingAmount, false);
         }
+    }
+
+    function withdrawRewards() external override {
+        require(baseRewardPool.getReward(), "LongPositionHandler :: rewards");
     }
 
     function allBalances()
