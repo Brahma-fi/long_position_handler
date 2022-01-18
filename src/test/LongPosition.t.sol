@@ -44,6 +44,7 @@ contract LongPositionTest is DSTest {
             self()
         );
 
+        swapRouter.addPositionHandler(self());
         swapAndGetBalances(2);
 
         emit log_named_address("Self", self());
