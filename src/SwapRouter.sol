@@ -8,8 +8,8 @@ import "./interface/ICurvePool.sol";
 
 import "./utils/Console.sol";
 
-import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
-import {ERC20} from "@solmate/tokens/ERC20.sol";
+import {SafeTransferLib} from "./utils/ERC20/SafeTransferLib.sol";
+import {ERC20} from "./utils/ERC20/ERC20.sol";
 
 contract SwapRouter is ISwapRouter {
     using SafeTransferLib for ERC20;

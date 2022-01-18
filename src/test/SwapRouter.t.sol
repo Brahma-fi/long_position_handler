@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../SwapRouter.sol";
 import "./utils/IWETH9.sol";
 
-import "@ds-test/test.sol";
+import "../../lib/ds-test/src/test.sol";
 
 contract SwapRouterTest is DSTest {
     // SwapRouter private swapRouter;

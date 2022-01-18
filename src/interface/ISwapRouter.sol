@@ -5,7 +5,7 @@ import "./ICurvePool.sol";
 import "./IAggregationRouter.sol";
 import "./IChainlinkAggregatorV3.sol";
 
-import {ERC20} from "@solmate/tokens/ERC20.sol";
+import {ERC20} from "../utils/ERC20/ERC20.sol";
 
 interface ISwapRouter {
     /// CONSTANTS

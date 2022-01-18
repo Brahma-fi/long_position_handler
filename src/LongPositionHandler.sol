@@ -9,8 +9,8 @@ import {ILongPositionHandler} from "./interface/ILongPositionHandler.sol";
 
 import "./library/Math.sol";
 
-import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
-import {ERC20} from "@solmate/tokens/ERC20.sol";
+import {SafeTransferLib} from "./utils/ERC20/SafeTransferLib.sol";
+import {ERC20} from "./utils/ERC20/ERC20.sol";
 
 contract LongPositionHandler is ILongPositionHandler {
     using SafeTransferLib for ERC20;

@@ -13,7 +13,7 @@ import {ICrvDepositor} from "../interface/ICrvDepositor.sol";
 import "./utils/IWETH9.sol";
 import "./utils/IUniswapSwapRouter.sol";
 
-import "@ds-test/test.sol";
+import "../../lib/ds-test/src/test.sol";
 
 contract LongPositionTest is DSTest {
     SwapRouter private swapRouter;
