@@ -47,7 +47,6 @@ interface ISwapRouter {
         address token,
         uint256 amountToSwap,
         address recipient,
-        uint256 slippage,
         bytes memory data
     ) external returns (uint256 amountOut);
 
