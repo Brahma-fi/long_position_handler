@@ -5,7 +5,6 @@ interface IPositionHandler {
     function openPosition(
         uint256 _amount,
         bool _isLong,
-        uint256 _slippage,
         bytes memory _data
     ) external;
 
