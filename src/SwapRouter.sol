@@ -99,7 +99,6 @@ contract SwapRouter is ISwapRouter {
         address token,
         uint256 amountToSwap,
         address recipient,
-        uint256 slippage,
         bytes memory data
     ) external override onlyHandler returns (uint256 amountOut) {
         require(
@@ -107,16 +106,12 @@ contract SwapRouter is ISwapRouter {
             "SwapRouter :: token"
         );
         require(amountToSwap > 0, "SwapRouter :: amountToSwap");
-        require(slippage > 0 && slippage <= 100, "SwapRouter :: slippage");
 
         ERC20 token0 = direction ? USDC : ERC20(token);
         ERC20 token1 = direction ? ERC20(token) : USDC;
 
         token0.safeTransferFrom(recipient, address(this), amountToSwap);
         token0.safeApprove(address(oneInchRouter), type(uint256).max);
-
-        // uint256 expectedAmountOut = getTokenPriceInUSD(address(token1)) *
-        //     amountToSwap;
 
         _swapTokens(data);
         amountOut = token1.balanceOf(address(this));
@@ -195,6 +190,7 @@ contract SwapRouter is ISwapRouter {
     }
 
     function _swapTokens(bytes memory data) internal {
+        // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory _data) = address(oneInchRouter).call(data);
         require(success, string(abi.encodePacked(_data)));
     }
