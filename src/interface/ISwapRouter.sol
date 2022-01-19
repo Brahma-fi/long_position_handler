@@ -48,7 +48,7 @@ interface ISwapRouter {
         uint256 amountToSwap,
         address recipient,
         uint256 slippage,
-        bytes memory data
+        bytes calldata data
     ) external returns (uint256 amountOut);
 
     function swapOnCRVCVXCRVPool(
