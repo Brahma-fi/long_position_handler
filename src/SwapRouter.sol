@@ -102,7 +102,9 @@ contract SwapRouter is ISwapRouter {
         bytes memory data
     ) external override onlyHandler returns (uint256 amountOut) {
         require(
-            token == address(CRV) || token == address(CVX),
+            token == address(CRV) ||
+                token == address(CVX) ||
+                token == address(CVXCRV),
             "SwapRouter :: token"
         );
         require(amountToSwap > 0, "SwapRouter :: amountToSwap");
