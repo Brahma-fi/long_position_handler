@@ -50,7 +50,6 @@ contract LongPositionHandler is ILongPositionHandler {
     function openPosition(
         uint256 _amount,
         bool _isLong,
-        uint256 _slippage,
         bytes memory _data
     ) external override {
         require(_isLong, "LongPositionHandler :: not long");
@@ -66,7 +65,6 @@ contract LongPositionHandler is ILongPositionHandler {
             address(swapRouter.CRV()),
             _amount,
             address(this),
-            _slippage,
             _data
         );
 
@@ -129,15 +127,10 @@ contract LongPositionHandler is ILongPositionHandler {
         return baseRewardPool.balanceOf(address(this));
     }
 
-    function convertBalanceAndWithdraw(
-        bytes memory _cvxcrvSwapData,
-        uint256 _slippage
-    ) external override {
-        require(
-            _slippage > 0 && _slippage <= 100,
-            "LongPositionHandler :: slippage"
-        );
-
+    function convertBalanceAndWithdraw(bytes memory _cvxcrvSwapData)
+        external
+        override
+    {
         /// Convert CVXCRV -> USDC on 1inch and transfer
         if (swapRouter.CVXCRV().balanceOf(address(this)) > 0) {
             swapRouter.estimateAndSwapTokens(
@@ -145,7 +138,6 @@ contract LongPositionHandler is ILongPositionHandler {
                 address(swapRouter.CVXCRV()),
                 swapRouter.CVXCRV().balanceOf(address(this)),
                 address(this),
-                _slippage,
                 _cvxcrvSwapData
             );
 
