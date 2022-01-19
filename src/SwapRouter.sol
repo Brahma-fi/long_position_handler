@@ -113,18 +113,13 @@ contract SwapRouter is ISwapRouter {
         ERC20 token1 = direction ? ERC20(token) : USDC;
 
         token0.safeTransferFrom(recipient, address(this), amountToSwap);
+        token0.safeApprove(address(oneInchRouter), type(uint256).max);
 
-        uint256 expectedAmountOut = getTokenPriceInUSD(address(token1)) *
-            amountToSwap;
+        // uint256 expectedAmountOut = getTokenPriceInUSD(address(token1)) *
+        //     amountToSwap;
 
-        _swapTokens(
-            token0,
-            token1,
-            amountToSwap,
-            expectedAmountOut,
-            slippage,
-            data
-        );
+        _swapTokens(data);
+        amountOut = token1.balanceOf(address(this));
 
         token1.safeTransfer(recipient, amountOut);
         token0.safeTransfer(recipient, token0.balanceOf(address(this)));
@@ -199,30 +194,9 @@ contract SwapRouter is ISwapRouter {
         ERC20(_token).safeTransfer(governance, USDC.balanceOf(address(this)));
     }
 
-    function _swapTokens(
-        ERC20 token0,
-        ERC20 token1,
-        uint256 amount,
-        uint256 minReturn,
-        uint256 slippage,
-        bytes memory data
-    ) internal {
-        SwapDescription memory desc = SwapDescription({
-            srcToken: IERC20(address(token0)),
-            dstToken: IERC20(address(token1)),
-            srcReceiver: payable(aggregationExecutor),
-            dstReceiver: payable(address(this)),
-            amount: amount,
-            minReturnAmount: (minReturn * (100 - slippage)) / 100,
-            flags: 0,
-            permit: "0x"
-        });
-
-        oneInchRouter.swap(
-            IAggregationExecutor(aggregationExecutor),
-            desc,
-            data
-        );
+    function _swapTokens(bytes memory data) internal {
+        (bool success, bytes memory _data) = address(oneInchRouter).call(data);
+        require(success, string(abi.encodePacked(_data)));
     }
 
     modifier onlyGovernance() {
@@ -235,3 +209,4 @@ contract SwapRouter is ISwapRouter {
         _;
     }
 }
+// 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, 0xD533a949740bb3306d119CC777fa900bA034cd52,0x220bdA5c8994804Ac96ebe4DF184d25e5c2196D4,0xAE75B29ADe678372D77A8B41225654138a7E6ff1, 0x140713bbD82113e104C3a45661134F9764807922,1000,0,0,""
