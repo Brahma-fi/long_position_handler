@@ -159,12 +159,6 @@ contract LongPositionHandler is ILongPositionHandler {
         validTransaction(_amount)
     {
         swapRouter.USDC().safeTransferFrom(msg.sender, address(this), _amount);
-        SafeTransferLib.safeTransferFrom(
-            swapRouter.USDC(),
-            msg.sender,
-            address(this),
-            _amount
-        );
     }
 
     function withdraw(uint256 _amount)
