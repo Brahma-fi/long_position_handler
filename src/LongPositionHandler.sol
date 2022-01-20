@@ -5,6 +5,7 @@ import "./interface/ISwapRouter.sol";
 import "./interface/IConvexRewards.sol";
 import "./interface/ICrvDepositor.sol";
 import "./interface/IPositionHandler.sol";
+import "./interface/ICurvePool.sol";
 import {ILongPositionHandler} from "./interface/ILongPositionHandler.sol";
 
 import "./library/Math.sol";
@@ -218,6 +219,7 @@ contract LongPositionHandler is ILongPositionHandler {
 
     function allBalances()
         public
+        view
         override
         returns (
             uint256 crvBalance,
@@ -238,6 +240,7 @@ contract LongPositionHandler is ILongPositionHandler {
 
     function balancesInUSDC()
         external
+        view
         returns (
             uint256 _crv,
             uint256 _cvx,
@@ -270,7 +273,7 @@ contract LongPositionHandler is ILongPositionHandler {
             _3crvBalance;
     }
 
-    function positionInUSDC() external override returns (uint256) {
+    function positionInUSDC() external view override returns (uint256) {
         uint256 crvPrice = swapRouter.getTokenPriceInUSD(
             address(swapRouter.CRV())
         );
@@ -278,7 +281,7 @@ contract LongPositionHandler is ILongPositionHandler {
         return crvPrice * _getCVXCRVInPositionInCRV();
     }
 
-    function positionInCRV() external override returns (uint256) {
+    function positionInCRV() external view override returns (uint256) {
         return _getCVXCRVInPositionInCRV();
     }
 
@@ -302,6 +305,7 @@ contract LongPositionHandler is ILongPositionHandler {
 
     function _getBalances()
         internal
+        view
         returns (
             uint256 crvBalance,
             uint256 cvxcrvBalance,
@@ -317,7 +321,7 @@ contract LongPositionHandler is ILongPositionHandler {
         usdcBalance = swapRouter.USDC().balanceOf(address(this));
     }
 
-    function _getCVXCRVInPositionInCRV() internal returns (uint256) {
+    function _getCVXCRVInPositionInCRV() internal view returns (uint256) {
         return
             swapRouter.crvcvxcrvPool().get_dy(
                 1,

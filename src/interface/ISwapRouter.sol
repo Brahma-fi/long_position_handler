@@ -9,35 +9,35 @@ import {ERC20} from "../utils/ERC20/ERC20.sol";
 
 interface ISwapRouter {
     /// CONSTANTS
-    function USDC() external returns (ERC20);
+    function USDC() external view returns (ERC20);
 
-    function governance() external returns (address);
+    function governance() external view returns (address);
 
     /// CURVE POOL (CRV/CVXCRV)
-    function CRV() external returns (ERC20);
+    function CRV() external view returns (ERC20);
 
-    function CVX() external returns (ERC20);
+    function CVX() external view returns (ERC20);
 
-    function CVXCRV() external returns (ERC20);
+    function CVXCRV() external view returns (ERC20);
 
-    function _3CRV() external returns (ERC20);
+    function _3CRV() external view returns (ERC20);
 
-    function crvcvxcrvPool() external returns (ICurvePool);
+    function crvcvxcrvPool() external view returns (ICurvePool);
 
-    function _3crvPool() external returns (ICurvePool);
+    function _3crvPool() external view returns (ICurvePool);
 
     /// 1INCH AGGREGATORS
-    function oneInchRouter() external returns (IAggregationRouter);
+    function oneInchRouter() external view returns (IAggregationRouter);
 
-    function aggregationExecutor() external returns (address);
+    function aggregationExecutor() external view returns (address);
 
     /// CHAINLINK PRICE FEETS
-    function CRVUSD() external returns (IChainlinkAggregatorV3);
+    function CRVUSD() external view returns (IChainlinkAggregatorV3);
 
-    function CVXUSD() external returns (IChainlinkAggregatorV3);
+    function CVXUSD() external view returns (IChainlinkAggregatorV3);
 
     // Owner :: Long Position Handler
-    function positionHandlers(address handler) external returns (bool);
+    function positionHandlers(address handler) external view returns (bool);
 
     /// FUNCTIONS
     function addPositionHandler(address _positionHandler) external;

@@ -7,13 +7,13 @@ import "./ICrvDepositor.sol";
 import "./IPositionHandler.sol";
 
 interface ILongPositionHandler is IPositionHandler {
-    function swapRouter() external returns (ISwapRouter);
+    function swapRouter() external view returns (ISwapRouter);
 
-    function baseRewardPool() external returns (IConvexRewards);
+    function baseRewardPool() external view returns (IConvexRewards);
 
-    function crvDepositor() external returns (ICrvDepositor);
+    function crvDepositor() external view returns (ICrvDepositor);
 
-    function governance() external returns (address);
+    function governance() external view returns (address);
 
     function convertBalanceAndWithdraw(bytes memory _cvxcrvSwapData) external;
 
@@ -23,6 +23,7 @@ interface ILongPositionHandler is IPositionHandler {
 
     function allBalances()
         external
+        view
         returns (
             uint256 crvBalance,
             uint256 cvxcrvBalance,
@@ -33,6 +34,7 @@ interface ILongPositionHandler is IPositionHandler {
 
     function balancesInUSDC()
         external
+        view
         returns (
             uint256 _crv,
             uint256 _cvx,
@@ -41,7 +43,7 @@ interface ILongPositionHandler is IPositionHandler {
             uint256 _usdc
         );
 
-    function positionInUSDC() external returns (uint256);
+    function positionInUSDC() external view returns (uint256);
 
-    function positionInCRV() external returns (uint256);
+    function positionInCRV() external view returns (uint256);
 }
