@@ -253,21 +253,33 @@ contract LongPositionHandler is ILongPositionHandler {
             uint256 _3crvBalance,
             uint256 usdcBalance
         ) = _getBalances();
-        uint256 crvInUSDC = swapRouter.getTokenPriceInUSD(
+        uint256 crvPrice = swapRouter.getTokenPriceInUSD(
             address(swapRouter.CRV())
         );
 
         _usdc = usdcBalance;
-        _crv = crvBalance * crvInUSDC;
+        _crv = crvBalance * crvPrice;
         _cvx =
             cvxBalance *
             swapRouter.getTokenPriceInUSD(address(swapRouter.CVX()));
         _cvxcrv =
             swapRouter.crvcvxcrvPool().get_dy(1, 0, cvxcrvBalance) *
-            crvInUSDC;
+            crvPrice;
         _3crv =
             (swapRouter._3crvPool().get_virtual_price() / 1e18) *
             _3crvBalance;
+    }
+
+    function positionInUSDC() external override returns (uint256) {
+        uint256 crvPrice = swapRouter.getTokenPriceInUSD(
+            address(swapRouter.CRV())
+        );
+
+        return crvPrice * _getCVXCRVInPositionInCRV();
+    }
+
+    function positionInCRV() external override returns (uint256) {
+        return _getCVXCRVInPositionInCRV();
     }
 
     function amountInPosition(address _token)
@@ -303,6 +315,15 @@ contract LongPositionHandler is ILongPositionHandler {
         cvxBalance = swapRouter.CVX().balanceOf(address(this));
         _3crvBalance = swapRouter._3CRV().balanceOf(address(this));
         usdcBalance = swapRouter.USDC().balanceOf(address(this));
+    }
+
+    function _getCVXCRVInPositionInCRV() internal returns (uint256) {
+        return
+            swapRouter.crvcvxcrvPool().get_dy(
+                1,
+                0,
+                baseRewardPool.balanceOf(address(this))
+            );
     }
 
     modifier validTransaction(uint256 _amount) {
