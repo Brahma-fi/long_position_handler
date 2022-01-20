@@ -321,12 +321,11 @@ contract LongPositionHandler is ILongPositionHandler {
     }
 
     function _getCVXCRVInPositionInCRV() internal view returns (uint256) {
+        uint256 stakedCVXCRV = baseRewardPool.balanceOf(address(this));
         return
-            swapRouter.crvcvxcrvPool().get_dy(
-                1,
-                0,
-                baseRewardPool.balanceOf(address(this))
-            );
+            stakedCVXCRV != 0
+                ? swapRouter.crvcvxcrvPool().get_dy(1, 0, stakedCVXCRV)
+                : 0;
     }
 
     modifier validTransaction(uint256 _amount) {
