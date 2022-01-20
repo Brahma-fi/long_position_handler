@@ -40,4 +40,8 @@ interface ILongPositionHandler is IPositionHandler {
             uint256 _3crv,
             uint256 _usdc
         );
+
+    function positionInUSDC() external returns (uint256);
+
+    function positionInCRV() external returns (uint256);
 }
