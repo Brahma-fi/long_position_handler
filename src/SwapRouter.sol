@@ -184,7 +184,9 @@ contract SwapRouter is ISwapRouter {
         (, int256 answer, , , ) = (token == address(CRV) ? CRVUSD : CVXUSD)
             .latestRoundData();
 
-        return (uint256(answer) / uint256(CRVUSD.decimals())) * USDC.decimals();
+        return
+            (uint256(answer) * 10**USDC.decimals()) /
+            10**uint256(CRVUSD.decimals());
     }
 
     function sweep(address _token) external override onlyGovernance {
