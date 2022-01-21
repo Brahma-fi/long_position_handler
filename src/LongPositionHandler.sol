@@ -193,14 +193,17 @@ contract LongPositionHandler is ILongPositionHandler {
                 0,
                 baseRewardPool.balanceOf(address(this))
             );
-            uint256 cvxcrvBalanceInUSDC = (crvPrice * cvxcrvBalanceInCRV);
+            uint256 cvxcrvBalanceInUSDC = (crvPrice * cvxcrvBalanceInCRV) /
+                10**swapRouter.USDC().decimals();
             uint256 cvxcrvInUSDCToUnstake = Math.min(
                 pendingAmount,
                 cvxcrvBalanceInUSDC
             );
 
             /// return pendingWithdrawals & set any amountUnableToWithdraw
-            pendingWithdrawal = cvxcrvInUSDCToUnstake / crvPrice;
+            pendingWithdrawal =
+                cvxcrvInUSDCToUnstake /
+                (crvPrice / 10**swapRouter.USDC().decimals());
             amountUnableToWithdraw = Math.min(
                 0,
                 pendingAmount - cvxcrvInUSDCToUnstake
@@ -270,8 +273,9 @@ contract LongPositionHandler is ILongPositionHandler {
         uint256 crvPrice = swapRouter.getTokenPriceInUSD(
             address(swapRouter.CRV())
         );
-
-        return crvPrice * _getCVXCRVInPositionInCRV();
+        return
+            (crvPrice * _getCVXCRVInPositionInCRV()) /
+            10**swapRouter.USDC().decimals();
     }
 
     function positionInCRV() external view override returns (uint256) {
