@@ -24,15 +24,16 @@ contract Harvester is IHarvester {
         wantToken = _wantToken;
     }
 
-    function addSwapToken(address _addr) external {
-        require(_addr != address(0), "_addr invalid");
+    function setWantToken(address _addr) external validAddress(_addr) {
+        wantToken = IERC20Metadata(_addr);
+    }
 
+    function addSwapToken(address _addr) external validAddress(_addr) {
         swapTokens.push(_addr);
         numTokens++;
     }
 
-    function removeSwapToken(address _addr) external {
-        require(_addr != address(0), "_addr invalid");
+    function removeSwapToken(address _addr) external validAddress(_addr) {
         uint256 _initialNumTokens = numTokens;
 
         for (uint256 idx = 0; idx < _initialNumTokens; idx++) {
@@ -44,6 +45,23 @@ contract Harvester is IHarvester {
 
         if (numTokens == _initialNumTokens) {
             revert("_addr does not exist");
+        }
+    }
+
+    function swap(address sourceToken, uint256 slippage) public override {
+        require(sourceToken != address(0), "sourceToken invalid");
+
+        uint256 sourceTokenBalance = IERC20Metadata(sourceToken).balanceOf(
+            address(this)
+        );
+        if (sourceTokenBalance > 0) {
+            _estimateAndSwap(sourceToken, sourceTokenBalance, slippage, 500);
+        }
+    }
+
+    function harvest() external {
+        for (uint256 idx = 0; idx < swapTokens.length; idx++) {
+            swap(swapTokens[idx], 5000);
         }
     }
 
@@ -84,5 +102,10 @@ contract Harvester is IHarvester {
                 sqrtPriceLimitX96: 0
             });
         uniswapRouter.exactInputSingle(params);
+    }
+
+    modifier validAddress(address _addr) {
+        require(_addr != address(0), "_addr invalid");
+        _;
     }
 }
