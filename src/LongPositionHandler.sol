@@ -48,24 +48,25 @@ contract LongPositionHandler is ILongPositionHandler {
     }
 
     function openPosition(
-        uint256 _amount,
-        bool _isLong,
-        bytes memory _data
+        bytes calldata data
     ) external override {
-        require(_isLong, "LongPositionHandler :: not long");
+        
+        OpenPositionParams memory openPositionParams = abi.decode(data, (OpenPositionParams));
+        require(openPositionParams._isLong, "LongPositionHandler :: not long");
         require(
-            _amount > 0 &&
-                _amount <= swapRouter.USDC().balanceOf(address(this)),
+            openPositionParams._amount > 0 &&
+                openPositionParams._amount <= swapRouter.USDC().balanceOf(address(this)),
             "LongPositionHandler :: amount"
         );
 
+        
         /// Convert USDC -> CRV on 1inch
         uint256 receivedCRV = swapRouter.estimateAndSwapTokens(
             true,
             address(swapRouter.CRV()),
-            _amount,
+            openPositionParams._amount,
             address(this),
-            _data
+            openPositionParams._data
         );
 
         /// Check for expected cvxCRV after swap on curve
@@ -90,14 +91,16 @@ contract LongPositionHandler is ILongPositionHandler {
         }
     }
 
-    function closePosition(uint256 _amount) external override {
+    function closePosition(bytes calldata data) external override {
+        
+        ClosePositionParams memory closePositionParams = abi.decode(data, (ClosePositionParams));
         require(
-            _amount > 0 && _amount <= baseRewardPool.balanceOf(address(this)),
+            closePositionParams._amount > 0 && closePositionParams._amount <= baseRewardPool.balanceOf(address(this)),
             "LongPositionHandler :: amount"
         );
 
         /// Unstake _amount and claim rewards from convex
-        baseRewardPool.withdrawAndUnwrap(_amount, true);
+        baseRewardPool.withdrawAndUnwrap(closePositionParams._amount, true);
     }
 
     function closePositionAndCompound(bool compoundRewards)
@@ -152,37 +155,41 @@ contract LongPositionHandler is ILongPositionHandler {
         }
     }
 
-    function deposit(uint256 _amount)
+    function deposit(bytes calldata data)
         external
         override
-        validTransaction(_amount)
+        
     {
-        swapRouter.USDC().safeTransferFrom(msg.sender, address(this), _amount);
+        DepositParams memory depositParams = abi.decode(data, (DepositParams));
+        validTransaction(depositParams._amount);
+        swapRouter.USDC().safeTransferFrom(msg.sender, address(this), depositParams._amount);
     }
 
-    function withdraw(uint256 _amount)
+    function withdraw(bytes calldata data)
         external
         override
-        validTransaction(_amount)
+        
         returns (
             uint256 amountWithdrawn,
             uint256 pendingWithdrawal,
             uint256 amountUnableToWithdraw
         )
     {
+        WithdrawParams memory withdrawParams = abi.decode(data, (WithdrawParams));
+        validTransaction(withdrawParams._amount);
         uint256 usdcBalance = swapRouter.USDC().balanceOf(address(this));
 
         /// Transfer USDC if sufficient balance
-        if (_amount <= usdcBalance) {
-            swapRouter.USDC().safeTransfer(msg.sender, _amount);
-            amountWithdrawn = _amount;
+        if (withdrawParams._amount <= usdcBalance) {
+            swapRouter.USDC().safeTransfer(msg.sender, withdrawParams._amount);
+            amountWithdrawn = withdrawParams._amount;
             pendingWithdrawal = 0;
             amountUnableToWithdraw = 0;
         } else {
             /// If insufficient, transfer all USDC Balance
             amountWithdrawn = usdcBalance;
             swapRouter.USDC().safeTransfer(msg.sender, usdcBalance);
-            uint256 pendingAmount = _amount - usdcBalance;
+            uint256 pendingAmount = withdrawParams._amount - usdcBalance;
 
             /// Find amount of cvxCRV to unstake to get pending withdrawals
             uint256 crvPrice = swapRouter.getTokenPriceInUSD(
@@ -286,9 +293,9 @@ contract LongPositionHandler is ILongPositionHandler {
         external
         view
         override
-        returns (uint256)
+        returns (uint256, uint256)
     {
-        return ERC20(_token).balanceOf(address(this));
+        return (ERC20(_token).balanceOf(address(this)), block.number);
     }
 
     function sweep(address _token) external override {
@@ -326,8 +333,7 @@ contract LongPositionHandler is ILongPositionHandler {
                 : 0;
     }
 
-    modifier validTransaction(uint256 _amount) {
+    function validTransaction(uint256 _amount) internal {
         require(_amount > 0, "LongPositionHandler :: amount");
-        _;
     }
 }

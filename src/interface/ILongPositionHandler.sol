@@ -46,4 +46,17 @@ interface ILongPositionHandler is IPositionHandler {
     function positionInUSDC() external view returns (uint256);
 
     function positionInCRV() external view returns (uint256);
+
+    struct OpenPositionParams{
+        uint256 _amount;
+        bool _isLong;
+        bytes _data;
+    }
+
+    struct ClosePositionParams {uint256 _amount;}
+
+    struct DepositParams {uint256 _amount;}
+
+    struct WithdrawParams {uint256 _amount;}
+        
 }
