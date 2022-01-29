@@ -178,6 +178,20 @@ contract LongPositionHandler is ILongPositionHandler {
         amountUnableToWithdraw = usdcBal >= withdrawParams._amount
             ? 0
             : withdrawParams._amount - usdcBal;
+
+        swapRouter.USDC().safeTransfer(msg.sender, amountWithdrawn);
+    }
+
+    function claimRewards() external override {
+        /// get's all the staking rewards
+        require(baseRewardPool.getReward(), "reward claim failed");
+        /// convert them to usdc
+        _convertBalances("");
+        /// send them to strategy
+        swapRouter.USDC().safeTransfer(
+            msg.sender,
+            swapRouter.USDC().balanceOf(address(this))
+        );
     }
 
     function allBalances()
@@ -267,6 +281,7 @@ contract LongPositionHandler is ILongPositionHandler {
         );
     }
 
+    /// @dev pass empty bytes as _cvxcrvSwapData to only convert rewards
     function _convertBalances(bytes memory _cvxcrvSwapData) internal {
         /// Convert CRV -> CVXCRV
         if (swapRouter.CRV().balanceOf(address(this)) > 0) {
@@ -277,7 +292,10 @@ contract LongPositionHandler is ILongPositionHandler {
             );
         }
         /// Convert CVXCRV -> USDC on 1inch and transfer
-        if (swapRouter.CVXCRV().balanceOf(address(this)) > 0) {
+        if (
+            swapRouter.CVXCRV().balanceOf(address(this)) > 0 &&
+            bytes32(_cvxcrvSwapData) != ""
+        ) {
             swapRouter.estimateAndSwapTokens(
                 false,
                 address(swapRouter.CVXCRV()),
@@ -318,11 +336,5 @@ contract LongPositionHandler is ILongPositionHandler {
 
     function validTransaction(uint256 _amount) internal pure {
         require(_amount > 0, "LongPositionHandler :: amount");
-    }
-
-    function claimRewards() external {
-        //1. get's all the staking rewards
-        //2. convert them to usdc
-        //3. send them to strategy
     }
 }

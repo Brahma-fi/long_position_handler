@@ -66,4 +66,6 @@ interface ILongPositionHandler is IPositionHandler {
     function positionInUSDC() external view returns (uint256);
 
     function positionInCRV() external view returns (uint256);
+
+    function claimRewards() external;
 }
