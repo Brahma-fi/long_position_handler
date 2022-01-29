@@ -283,14 +283,6 @@ contract LongPositionHandler is ILongPositionHandler {
 
     /// @dev pass empty bytes as _cvxcrvSwapData to only convert rewards
     function _convertBalances(bytes memory _cvxcrvSwapData) internal {
-        /// Convert CRV -> CVXCRV
-        if (swapRouter.CRV().balanceOf(address(this)) > 0) {
-            swapRouter.swapOnCRVCVXCRVPool(
-                true,
-                swapRouter.CRV().balanceOf(address(this)),
-                address(this)
-            );
-        }
         /// Convert CVXCRV -> USDC on 1inch and transfer
         if (
             swapRouter.CVXCRV().balanceOf(address(this)) > 0 &&
