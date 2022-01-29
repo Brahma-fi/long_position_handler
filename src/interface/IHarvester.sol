@@ -8,6 +8,8 @@ interface IHarvester {
 
     function setWantToken(address _addr) external;
 
+    function setSlippage(uint256 _slippage) external;
+
     // Add token to be swapped via 1inch
     function addSwapToken(address _addr) external;
 
@@ -18,5 +20,5 @@ interface IHarvester {
     function harvest() external;
 
     //1inch swap config add any required params
-    function swap(address sourceToken, uint256 slippage) external;
+    function swap(address sourceToken) external;
 }
