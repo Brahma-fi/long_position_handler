@@ -8,8 +8,15 @@ import "./interface/IUniswapV3Factory.sol";
 import "./interface/IQuoter.sol";
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 
 contract Harvester is IHarvester {
+    using SafeTransferLib for ERC20;
+    using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20Metadata;
+
     uint256 private immutable MAX_BPS = 10000;
 
     IUniswapV3Factory private immutable uniswapFactory =
@@ -105,7 +112,7 @@ contract Harvester is IHarvester {
     function harvest() external override {
         for (uint256 idx = 0; idx < swapTokens.length; idx++) {
             IERC20 _token = IERC20(swapTokens[idx]);
-            _token.transferFrom(
+            _token.safeTransferFrom(
                 msg.sender,
                 address(this),
                 _token.balanceOf(msg.sender)
@@ -116,14 +123,14 @@ contract Harvester is IHarvester {
 
         ERC20 _3crv = swapRouter._3CRV();
 
-        _3crv.transferFrom(
+        _3crv.safeTransferFrom(
             msg.sender,
             address(this),
             _3crv.balanceOf(msg.sender)
         );
         swapRouter.burn3CRVForUSDC(_3crv.balanceOf(address(this)), msg.sender);
 
-        wantToken.transfer(msg.sender, wantToken.balanceOf(address(this)));
+        wantToken.safeTransfer(msg.sender, wantToken.balanceOf(address(this)));
     }
 
     function _estimateAndSwap(
@@ -148,7 +155,7 @@ contract Harvester is IHarvester {
         uint256 amountIn,
         uint256 amountOutMinimum
     ) internal {
-        IERC20Metadata(token).approve(address(uniswapRouter), amountIn);
+        IERC20Metadata(token).safeApprove(address(uniswapRouter), amountIn);
 
         IUniswapSwapRouter.ExactInputSingleParams
             memory params = IUniswapSwapRouter.ExactInputSingleParams({
