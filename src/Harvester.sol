@@ -112,8 +112,6 @@ contract Harvester is IHarvester {
             );
 
             swap(swapTokens[idx]);
-
-            _token.transfer(msg.sender, _token.balanceOf(address(this)));
         }
 
         ERC20 _3crv = swapRouter._3CRV();
@@ -124,6 +122,8 @@ contract Harvester is IHarvester {
             _3crv.balanceOf(msg.sender)
         );
         swapRouter.burn3CRVForUSDC(_3crv.balanceOf(address(this)), msg.sender);
+
+        wantToken.transfer(msg.sender, wantToken.balanceOf(address(this)));
     }
 
     function _estimateAndSwap(
