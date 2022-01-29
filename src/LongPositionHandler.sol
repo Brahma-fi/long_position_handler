@@ -336,4 +336,13 @@ contract LongPositionHandler is ILongPositionHandler {
     function validTransaction(uint256 _amount) internal {
         require(_amount > 0, "LongPositionHandler :: amount");
     }
+
+    function claimRewards() external {
+
+        //1. get's all the staking rewards 
+
+        //2. convert them to usdc
+
+        //3. send them to strategy
+    }
 }
