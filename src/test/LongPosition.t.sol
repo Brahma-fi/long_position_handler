@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "../LongPositionHandler.sol";
 import "../SwapRouter.sol";
 
+import "../interface/IUniswapSwapRouter.sol";
 import {IAggregationRouter} from "../interface/IAggregationRouter.sol";
 import {IChainlinkAggregatorV3} from "../interface/IChainlinkAggregatorV3.sol";
 import {ICurvePool} from "../interface/ICurvePool.sol";
@@ -11,7 +12,6 @@ import {IConvexRewards} from "../interface/IConvexRewards.sol";
 import {ICrvDepositor} from "../interface/ICrvDepositor.sol";
 
 import "./utils/IWETH9.sol";
-import "./utils/IUniswapSwapRouter.sol";
 
 import "@ds-test/test.sol";
 
