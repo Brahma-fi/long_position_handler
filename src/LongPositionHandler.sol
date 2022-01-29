@@ -91,6 +91,8 @@ contract LongPositionHandler is ILongPositionHandler {
         }
     }
 
+
+    // closePosition: unstake CVXCRV on convex
     function closePosition(bytes calldata data) external override {
         
         ClosePositionParams memory closePositionParams = abi.decode(data, (ClosePositionParams));
@@ -164,6 +166,8 @@ contract LongPositionHandler is ILongPositionHandler {
         validTransaction(depositParams._amount);
         swapRouter.USDC().safeTransferFrom(msg.sender, address(this), depositParams._amount);
     }
+
+    // Convert CVXCRV -> USDC on 1inch and transfer the amount to Strategy
 
     function withdraw(bytes calldata data)
         external
