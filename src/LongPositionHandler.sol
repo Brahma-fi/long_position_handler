@@ -107,14 +107,18 @@ contract LongPositionHandler is ILongPositionHandler {
             (ClosePositionParams)
         );
         require(
-            closePositionParams._amount > 0 &&
-                closePositionParams._amount <=
+            closePositionParams._amount <=
                 baseRewardPool.balanceOf(address(this)),
             "LongPositionHandler :: amount"
         );
 
         /// Unstake _amount and claim rewards from convex
-        baseRewardPool.withdraw(closePositionParams._amount, true);
+        /// Unstake entire balance if closePositionParams._amount is 0
+        if (closePositionParams._amount == 0) {
+            baseRewardPool.withdrawAll(true);
+        } else {
+            baseRewardPool.withdraw(closePositionParams._amount, true);
+        }
     }
 
     function closePositionAndCompound(bool compoundRewards)
