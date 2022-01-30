@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../LongPositionHandler.sol";
 import "../SwapRouter.sol";
+import "../Harvester.sol";
 
 import "../interface/IUniswapSwapRouter.sol";
 import {IAggregationRouter} from "../interface/IAggregationRouter.sol";
@@ -18,6 +19,7 @@ import "@ds-test/test.sol";
 contract LongPositionTest is DSTest {
     SwapRouter private swapRouter;
     LongPositionHandler private longPositionHandler;
+    Harvester private harvester;
 
     IUniswapSwapRouter private immutable UniswapRouter =
         IUniswapSwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
@@ -37,7 +39,15 @@ contract LongPositionTest is DSTest {
             self()
         );
 
+        harvester = new Harvester(
+            address(this),
+            IERC20Metadata(address(USDC)),
+            swapRouter,
+            50000
+        );
+
         longPositionHandler = new LongPositionHandler(
+            harvester,
             ISwapRouter(address(swapRouter)),
             IConvexRewards(0x3Fe65692bfCD0e6CF84cB1E7d24108E434A7587e),
             ICrvDepositor(0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae),
